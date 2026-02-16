@@ -3,4 +3,4 @@
 set -e
 
 echo "### 1/5: Puxando código mais recente... ###"
-git pull origin main
+git pull origin master
