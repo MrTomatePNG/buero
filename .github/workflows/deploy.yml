@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v3
 
       # --- SSH CONNECTION STEPS ---
-      # Cada passo SSH agora executa um script específico no servidor remoto
+      #  Cada passo SSH agora executa um script específico no servidor remoto
 
       - name: 1/6 - Pull latest code & prepare scripts
         uses: appleboy/ssh-action@master
