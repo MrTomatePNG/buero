@@ -1,42 +1,28 @@
-# sv
+# Cauldron - Plataforma de Mídia Social
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+**Cauldron** é uma moderna plataforma de rede social para compartilhamento de mídia (imagens e vídeos), construída com **SvelteKit**, **Prisma** e **TypeScript**. O projeto foi concebido para ser uma Single-Page Application (SPA) altamente interativa e reativa, com foco na experiência do usuário e na agilidade do desenvolvimento.
 
-## Creating a project
+A arquitetura aproveita o poder do SvelteKit para renderização no servidor (SSR), geração de sites estáticos (SSG) e uma navegação fluida no lado do cliente, garantindo performance e ótima SEO.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## 📚 Arquitetura e Documentação
 
-```sh
-# create a new project
-npx sv create my-app
-```
+Toda a arquitetura, conceitos e decisões de design do projeto estão detalhados na documentação. Para entender como o sistema funciona, comece por aqui:
 
-To recreate this project with the same configuration:
+*   [**01 - Visão Geral do Projeto**](./.docs/01-visao-geral-do-projeto.md)
+*   [**02 - Arquitetura de Dados**](./.docs/02-arquitetura-de-dados.md)
+*   [**03 - Fluxo de Upload Simplificado**](./.docs/03-fluxo-de-upload-simplificado.md)
+*   [**04 - Organização do Código**](./.docs/04-organizacao-do-codigo.md)
+*   [**05 - Observabilidade**](./.docs/05-observabilidade.md)
+*   [**06 - Princípios e Fundamentos Arquitetônicos**](./.docs/06-principios-e-fundamentos-arquitetonicos.md)
 
-```sh
-# recreate this project
-bun x sv create --template minimal --types ts --install bun cauldrun
-```
+---
 
-## Developing
+## 🛠️ Stack Tecnológica
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+*   **Framework Full-Stack:** [SvelteKit](https://kit.svelte.dev/)
+*   **Linguagem:** [TypeScript](https://www.typescriptlang.org/)
+*   **ORM:** [Prisma](https://www.prisma.io/) para interação com o banco de dados.
+*   **Banco de Dados:** [PostgreSQL](https://www.postgresql.org/)
+*   **Armazenamento de Mídia:** Serviço de Object Storage compatível com API S3 (Ex: Minio, AWS S3, Cloudflare R2).
+*   **Estilização:** [SCSS](https://sass-lang.com/) com pré-processamento do Svelte.
+*   **UI/Componentes:** A ser definido (ex: `shadcn-svelte`, `bits-ui`).
