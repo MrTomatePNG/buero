@@ -1,101 +1,36 @@
-<script>
-    let menuEsquerdoAberto = false;
-    let menuDireitoAberto = false;
-
-    const fecharModais = () => {
-        menuEsquerdoAberto = false;
-        menuDireitoAberto = false;
-    };
-</script>
-
-<main class="app-container">
-    <aside class="area-ranking">
-        <div class="section">Ranking / Mais Comentados</div>
-        <div class="section">Options / Support</div>
-    </aside>
-
-    <article class="area-main">
-        <nav class="tabs">novidades / aleatorios / seguindo</nav>
-        <div class="scroll-content">
-            {#each Array(20) as _, i}
-                <div class="item">Item {i + 1}</div>
-            {/each}
-        </div>
-    </article>
-
-    <aside class="area-notifications">
-        <div class="section">Pesquisa/Notificaçoes</div>
-    </aside>
-
-    <aside class="area-chats">
-        <div class="section">Chats / Grupos</div>
-    </aside>
-</main>
+<!--
+  Este é o conteúdo da página principal.
+  Ele será automaticamente injetado no <slot /> do `+layout.svelte`.
+-->
+<article class="area-main">
+    <nav class="tabs">novidades / aleatorios / seguindo</nav>
+    <div class="scroll-content">
+        {#each Array(20) as _, i}
+            <div class="item">Item {i + 1}</div>
+        {/each}
+    </div>
+</article>
 
 <style lang="scss">
-    $gap: 8px;
-    $bg-color: #1a1a1a;
+    @use "sass:math"; // Estilos específicos do conteúdo principal.
+    // O container .area-main é posicionado pelo grid no `+layout.svelte`.
     $section-bg: #2a2a2a;
     $text-color: #e0e0e0;
     $border-gray: #3a3a3a;
-
-    .app-container {
-        display: grid;
-        height: 100vh;
-        width: 100vw;
-        padding: $gap;
-        gap: $gap;
-        overflow: hidden;
-        background-color: $bg-color;
-        box-sizing: border-box;
-
-        grid-template-columns: 1fr 1.5fr 1fr;
-        grid-template-rows: 1fr 13fr;
-        grid-template-areas:
-            "ranking   main   notif"
-            "ranking   main   chats";
-    }
-
-    aside,
-    article {
-        background: $section-bg;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-
-    .area-ranking {
-        grid-area: ranking;
-    }
+    $breakpoint-desktop: 768px;
 
     .area-main {
-        grid-area: main;
+        grid-area: main; // Usado pelo grid do layout no desktop
         display: flex;
         flex-direction: column;
         height: 100%;
         min-height: 0;
         position: relative;
-    }
+        background: $section-bg;
 
-    .area-notifications {
-        grid-area: notif;
-    }
-
-    .area-chats {
-        grid-area: chats;
-    }
-
-    .section {
-        padding: 20px;
-        color: $text-color;
-        font-size: 14px;
-        border-bottom: 1px solid $border-gray;
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-
-        &:last-child {
-            border-bottom: none;
+        // No mobile, ele deve ocupar toda a altura
+        @media (max-width: ($breakpoint-desktop, 1px)) {
+            height: 100vh;
         }
     }
 
