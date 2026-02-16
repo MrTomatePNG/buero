@@ -37,6 +37,7 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             set -e
+            export PATH="/home/cauldrun/.bun/bin:$PATH"
             cd /opt/cauldrun
             ./scripts/2_install.sh
 
@@ -63,6 +64,7 @@ jobs:
             set -e
             # Pass DATABASE_URL to the script's environment
             export DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}"
+            export PATH="/home/cauldrun/.bun/bin:$PATH"
             cd /opt/cauldrun
             ./scripts/4_build.sh
 
