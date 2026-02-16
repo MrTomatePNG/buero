@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PostStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model User {
+  id        String  @id @unique @default(cuid())
+  username  String  @unique @db.VarChar(30)
+  email     String  @unique @db.VarChar(255)
+  password  String  @db.Text
+  avatarUrl String? @db.Text
+  bio       String? @db.VarChar(160)
+
+  sessions Session[]
+  posts    Post[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz()
+  updatedAt DateTime @updatedAt @db.Timestamptz()
+
+  @@index([username])
+}
+
+model Session {
+  id        String   @id @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+}
+
+model Post {
+  id     BigInt @id @default(autoincrement())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  comment String? @db.Text
+
+  // Media
+  mediaHash String    @db.VarChar(64)
+  mediaType MediaType // 'image' ou 'video'
+  mediaUrl  String?   @db.Text
+  thumbUrl  String?   @db.Text
+
+  status PostStatus @default(pending)
+
+  // Relação com tags
+  tags PostTag[]
+
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @updatedAt @db.Timestamp()
+
+  @@index([status]) // Índice onde status = 'completed' é automático
+  @@index([createdAt(sort: Desc)])
+}
+
+enum MediaType {
+  image
+  video
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.Text
+
+  posts PostTag[]
+}
+
+model PostTag {
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId BigInt
+
+  tag   Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId Int
+
+  @@id([postId, tagId])
+  @@index([postId])
+  @@index([tagId])
+}
