@@ -1,65 +1,13 @@
-// --- RESET GLOBAL ---
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 html,
 body {
     width: 100%;
     height: 100%;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
-}
-
-body {
     background-color: #000;
-    color: #ccc;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-        Cantarell, sans-serif;
-    -webkit-font-smoothing: antialiased;
 }
 
-// --- VARIÁVEIS GLOBAIS ---
-:root {
-    --gap: 3px;
-    --bg-card: #121212;
-    --border-color: red;
-    --text-primary: #ccc;
-    --text-secondary: #999;
-}
-
-// --- ESTILOS GLOBAIS ---
-a {
-    color: inherit;
-    text-decoration: none;
-
-    &:hover {
-        opacity: 0.8;
-    }
-}
-
-button {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-// --- SCROLLBAR CUSTOMIZADA ---
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
-
-    &:hover {
-        background: #555;
-    }
+canvas {
+    display: block;
 }
