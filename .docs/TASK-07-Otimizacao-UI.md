@@ -28,11 +28,11 @@ Fornecer um feedback global de que a navegação entre páginas está ocorrendo.
 
 ### 2.3. Tratamento de Erros da API
 Exibir mensagens de erro retornadas pelas `Form Actions` de forma clara.
-*   **Requisito:** Erros de validação ou falhas na API (e.g., "usuário já existe", "credenciais inválidas") devem ser exibidos ao usuário no contexto do formulário.
-*   **Especificação:**
-    *   As `Form Actions` (TASK-02, TASK-05) devem retornar objetos com o estado do erro quando uma operação falha, em vez de redirecionar. Por exemplo: `return { status: 400, body: { error: 'Invalid credentials' } };`.
-    *   No SvelteKit, a `prop` `form` disponível no `+page.svelte` contém o resultado da última submissão de `Form Action`.
-    *   No componente do formulário, verificar se `form?.error` existe e exibir a mensagem de erro para o usuário.
+*   **Requisito:** Erros de validação ou falhas na API devem ser exibidos ao usuário.
+*   **Especificação (Svelte 5):**
+    *   As `Form Actions` devem retornar objetos com o estado do erro.
+    *   No componente Svelte, acessar a propriedade `form` via `$props()`: `let { form } = $props();`.
+    *   Utilizar lógica condicional para exibir `form?.error` próximo aos campos correspondentes.
 
 ## 3. Critérios de Aceitação
 

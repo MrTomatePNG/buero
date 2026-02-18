@@ -17,12 +17,12 @@ Implementar a função `load` na rota principal para buscar os dados dos posts n
 
 ### 2.2. Componente de Post (`src/components/Post.svelte`)
 Criar um componente Svelte reutilizável para exibir um único post.
-*   **Requisito:** O componente deve receber os dados de um post como propriedade (`prop`) e renderizá-los.
-*   **Especificação:**
-    *   O componente deve aceitar uma `prop` `post`.
-    *   Renderizar o cabeçalho do post, incluindo o avatar e o nome de usuário do autor (`post.author.avatarUrl` e `post.author.username`).
-    *   Renderizar a mídia do post. Para imagens, usar uma tag `<img src={post.mediaUrl} />`.
-    *   Renderizar a legenda (`post.caption`) e a data de criação (`post.createdAt`).
+*   **Requisito:** O componente deve receber os dados de um post como propriedade.
+*   **Especificação (Svelte 5):**
+    *   Utilizar `$props()` para receber o objeto `post`: `let { post } = $props();`.
+    *   Renderizar o cabeçalho do post, incluindo o avatar e o nome de usuário do autor.
+    *   Renderizar a mídia do post (tag `<img>` para imagens).
+    *   Renderizar a legenda e a data de criação.
 
 ### 2.3. Montagem do Feed (`src/routes/+page.svelte`)
 Utilizar o componente `Post.svelte` para renderizar a lista de posts na página principal.

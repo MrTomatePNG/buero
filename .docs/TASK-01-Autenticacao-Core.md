@@ -1,86 +1,108 @@
-# TASK-01: Implementação do Core de Autenticação
+# TASK-01: Implementação do Core de Autenticação (Better Auth)
 
 ## 1. Objetivo
 
-O objetivo desta tarefa é estabelecer a camada fundamental do sistema de autenticação utilizando **Lucia Auth v3**. A implementação se concentrará exclusivamente na lógica de backend. Ao final, o sistema deverá ser capaz de gerenciar e validar sessões de usuários de forma programática, alinhado com as versões de `lucia@3.2.2` e `@sveltejs/kit@2.50.2`.
+Estabelecer a infraestrutura de autenticação utilizando **Better Auth**. O objetivo é configurar o servidor de autenticação, integrar com o Prisma e habilitar a gestão de sessões via middleware do SvelteKit.
 
 ## 2. Componentes a Implementar
 
-### 2.1. Schema de Dados (`prisma/schema.prisma`)
-O schema do Prisma deve ser definido para suportar os modelos exigidos pela Lucia v3. Notavelmente, a tabela `Key` não é mais necessária para autenticação de senha, pois essa lógica foi internalizada.
-
-*   **Requisito:** Os modelos `User` e `Session` devem ser definidos.
-*   **Especificação:** O tipo de dado para os campos de ID deve ser `String`. O `id` do usuário deve ter um provedor de função como `cuid()` ou `uuid()`.
+### 2.1. Definição do Schema Prisma (`prisma/schema.prisma`)
+O Better Auth requer modelos específicos para gerenciar usuários, sessões e contas.
+*   **Requisito:** Implementar os modelos `User`, `Session`, `Account` e `Verification`.
+*   **Especificação:** Utilizar identificadores de string (`String @id`) para compatibilidade e segurança.
 
     ```prisma
     model User {
-      id        String    @id @default(cuid())
-      username  String    @unique
-      // Atributos para autenticação de senha são gerenciados pela Lucia internamente
-      // e não requerem mais um campo de senha explícito no modelo User.
-      
-      // Relação com Lucia
-      sessions  Session[]
+      id            String    @id
+      name          String
+      email         String    @unique
+      emailVerified Boolean
+      image         String?
+      createdAt     DateTime
+      updatedAt     DateTime
+      sessions      Session[]
+      accounts      Account[]
+
+      @@map("user")
     }
 
     model Session {
       id        String   @id
       expiresAt DateTime
+      token     String
+      createdAt DateTime
+      updatedAt DateTime
+      ipAddress String?
+      userAgent String?
       userId    String
       user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+      @@map("session")
+    }
+
+    model Account {
+      id                    String    @id
+      accountId             String
+      providerId            String
+      userId                String
+      user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+      accessToken           String?
+      refreshToken          String?
+      idToken               String?
+      accessTokenExpiresAt  DateTime?
+      refreshTokenExpiresAt DateTime?
+      scope                 String?
+      password              String?
+      createdAt             DateTime
+      updatedAt             DateTime
+
+      @@map("account")
+    }
+
+    model Verification {
+      id         String    @id
+      identifier String
+      value      String
+      expiresAt  DateTime
+      createdAt  DateTime?
+      updatedAt  DateTime?
+
+      @@map("verification")
     }
     ```
 
-### 2.2. Singleton de Autenticação (`src/lib/server/auth.ts`)
-Um módulo deve ser criado para centralizar a inicialização e configuração da instância da Lucia.
-*   **Requisito:** Este arquivo deve exportar uma única instância `lucia`.
-*   **Especificação:** O módulo deve utilizar o `PrismaAdapter`. A configuração deve definir os `userAttributes` a serem incluídos no objeto `user` da sessão e garantir que cookies seguros (`secure: true`) sejam utilizados em ambiente de produção.
+### 2.2. Configuração do Servidor de Autenticação (`src/lib/server/auth.ts`)
+Inicializar a instância do Better Auth com o adaptador Prisma.
+*   **Requisito:** Exportar a instância `auth`.
+*   **Especificação:** Configurar o `database` com o cliente Prisma e definir a estratégia de e-mail e senha.
 
     ```typescript
-    // src/lib/server/auth.ts
-    import { Lucia } from "lucia";
-    import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
-    import { prisma } from "$lib/server/prisma"; // Assumindo a existência deste client
-    import { dev } from "$app/environment";
+    import { betterAuth } from "better-auth";
+    import { prismaAdapter } from "better-auth/adapters/prisma";
+    import { prisma } from "$lib/server/prisma";
 
-    const adapter = new PrismaAdapter(prisma.session, prisma.user);
-
-    export const lucia = new Lucia(adapter, {
-        sessionCookie: {
-            attributes: {
-                secure: !dev
-            }
-        },
-        getUserAttributes: (attributes) => {
-            return {
-                username: attributes.username
-            };
+    export const auth = betterAuth({
+        database: prismaAdapter(prisma, {
+            provider: "postgresql",
+        }),
+        emailAndPassword: {
+            enabled: true
         }
     });
-
-    declare module "lucia" {
-        interface Register {
-            Lucia: typeof lucia;
-            DatabaseUserAttributes: {
-                username: string;
-            };
-        }
-    }
     ```
 
-### 2.3. Hook de Servidor (`src/hooks.server.ts`)
-Este middleware é responsável por interceptar todas as requisições e validar a identidade do usuário.
-*   **Requisito:** Implementar o hook `handle` para validar a sessão em cada requisição.
-*   **Especificação:** O hook deve extrair o `sessionId`, validar a sessão com `lucia.validateSession()`, e popular `event.locals.user` e `event.locals.session`.
+### 2.3. Integração com Middleware (`src/hooks.server.ts`)
+Configurar o SvelteKit para processar requisições de autenticação e injetar a sessão.
+*   **Requisito:** Implementar o handle para converter requisições do Better Auth.
+*   **Especificação:** Utilizar `svelteKitHandler` para rotear as chamadas de API internas do Better Auth.
 
 ## 3. Critérios de Aceitação
 
-*   **CA-1:** O schema do Prisma (`User`, `Session`) foi migrado com sucesso para o banco de dados.
-*   **CA-2:** O arquivo `src/lib/server/auth.ts` foi criado e não apresenta erros de compilação.
-*   **CA-3:** O arquivo `src/hooks.server.ts` foi criado, e o acesso a qualquer rota do servidor imprime `null` para `locals.user` no console, confirmando a execução do hook.
+*   **CA-1:** O banco de dados foi atualizado com os novos modelos via `npx prisma migrate dev`.
+*   **CA-2:** O arquivo `src/lib/server/auth.ts` exporta a instância `auth` configurada.
+*   **CA-3:** As rotas automáticas de autenticação (e.g., `/api/auth/...`) respondem corretamente conforme a documentação do Better Auth.
 
 ## 4. Referências Técnicas
 
-*   **Lucia Auth v3 - SvelteKit:** [https://lucia-auth.com/getting-started/sveltekit](https://lucia-auth.com/getting-started/sveltekit)
-*   **Lucia Auth v3 - Prisma Adapter:** [https://lucia-auth.com/database/prisma](https://lucia-auth.com/database/prisma)
-*   **Svelte 5 - Runas (se aplicável em UI):** [https://svelte.dev/docs/runes](https://svelte.dev/docs/runes)
+*   **Better Auth - SvelteKit Integration:** [https://www.better-auth.com/docs/installation/sveltekit](https://www.better-auth.com/docs/installation/sveltekit)
+*   **Better Auth - Prisma Adapter:** [https://www.better-auth.com/docs/adapters/prisma](https://www.better-auth.com/docs/adapters/prisma)

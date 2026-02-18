@@ -1,46 +1,43 @@
-# TASK-02: Desenvolvimento da UI de Autenticação
+# TASK-02: Desenvolvimento da UI de Autenticação (Better Auth Client)
 
 ## 1. Objetivo
 
-O objetivo desta tarefa é desenvolver os componentes de interface de usuário (UI) e a lógica de servidor para o registro e login de usuários, utilizando as `Form Actions` do SvelteKit e as APIs do **Lucia Auth v3**.
+Implementar os formulários de registro e login utilizando o cliente oficial do **Better Auth** para Svelte. O objetivo é garantir uma integração fluida com a reatividade do Svelte 5 e processar credenciais de forma segura.
 
 ## 2. Componentes a Implementar
 
-### 2.1. Lógica de Servidor (`src/routes/login/+page.server.ts`, etc.)
-Implementar as `Form Actions` que processarão os dados dos formulários de registro e login.
+### 2.1. Cliente de Autenticação (`src/lib/auth-client.ts`)
+Configurar a instância do cliente para uso no navegador.
+*   **Requisito:** Exportar o `authClient`.
+*   **Especificação:** Utilizar `createAuthClient` do pacote `better-auth/svelte`.
 
-*   **Ação `register`:**
-    1.  Receber `username` e `password` do formulário.
-    2.  Validar os dados (e.g., complexidade da senha).
-    3.  Utilizar `lucia.createUser()` para criar um novo usuário. Este método gerencia o hashing da senha e a criação do usuário em uma única operação.
-        *   **Parâmetros para `createUser`:** O `userId` (que pode ser gerado com `cuid()`), e os `key` (credenciais, no caso, `providerId: 'username'`, `providerUserId: username.toLowerCase()`, `password`).
-    4.  Após a criação, criar a sessão com `lucia.createSession()` e definir o cookie na resposta.
-    5.  Redirecionar o usuário para a página de perfil ou feed.
+    ```typescript
+    import { createAuthClient } from "better-auth/svelte";
+    export const authClient = createAuthClient({
+        baseURL: process.env.BETTER_AUTH_URL // URL base da aplicação
+    });
+    ```
 
-*   **Ação `login`:**
-    1.  Receber `username` e `password`.
-    2.  Utilizar `lucia.useKey('username', username.toLowerCase(), password)` para validar as credenciais.
-    3.  Se a chave for validada com sucesso, criar uma sessão com `lucia.createSession()` e definir o cookie.
-    4.  Redirecionar para a página de destino.
-    5.  Em caso de falha, retornar um erro para o formulário.
+### 2.2. Formulário de Registro (`src/routes/register/+page.svelte`)
+Desenvolver a interface para criação de novos usuários.
+*   **Requisito:** Campo de nome, e-mail e senha.
+*   **Especificação:** Utilizar o método `authClient.signUp.email()` para processar o registro.
+    *   Gerenciar estados de erro e carregamento utilizando as runas do Svelte 5 (`$state`).
 
-### 2.2. Componentes de Formulário (e.g., `src/routes/login/+page.svelte`)
-Desenvolver os formulários Svelte.
-*   **Requisito:** Criar formulários HTML para login e registro.
-*   **Especificação (Svelte 5):**
-    *   Acessar os dados do formulário e erros via `let { form } = $props();`.
-    *   Utilizar `{#if form?.error}` para exibir mensagens de erro retornadas pelas `actions`.
-    *   Para feedback de carregamento, pode-se usar a store `$navigating` do módulo `$app/navigation`.
+### 2.3. Formulário de Login (`src/routes/login/+page.svelte`)
+Desenvolver a interface para autenticação de usuários existentes.
+*   **Requisito:** Campo de e-mail e senha.
+*   **Especificação:** Utilizar o método `authClient.signIn.email()` para realizar o login.
+    *   Em caso de sucesso, redirecionar programaticamente para a rota protegida.
 
 ## 3. Critérios de Aceitação
 
-*   **CA-1:** Um usuário pode se registrar através do formulário, o que resulta na criação de um `User` no banco de dados.
-*   **CA-2:** Um usuário registrado pode fazer login, o que cria um registro na tabela `Session` e define um cookie de sessão no navegador.
-*   **CA-3:** Tentativas de login com credenciais incorretas resultam em uma mensagem de erro na UI.
-*   **CA-4:** A UI utiliza paradigmas do Svelte 5 para manipulação de estado e propriedades (e.g., `$props`).
+*   **CA-1:** O formulário de registro cria um novo usuário e redireciona para a página inicial após o sucesso.
+*   **CA-2:** O formulário de login valida credenciais contra o banco de dados e estabelece uma sessão ativa no navegador.
+*   **CA-3:** Erros de autenticação (e.g., senha incorreta, e-mail inexistente) são exibidos de forma clara ao usuário através de estados reativos do Svelte 5.
+*   **CA-4:** O componente utiliza `$props` para receber dados e `$state` para controle interno, conforme padrões do Svelte 5.
 
 ## 4. Referências Técnicas
 
-*   **Lucia Auth v3 - Username and Password:** [https://lucia-auth.com/tutorials/username-and-password/sveltekit](https://lucia-auth.com/tutorials/username-and-password/sveltekit)
-*   **SvelteKit - Form Actions:** [https://kit.svelte.dev/docs/form-actions](https://kit.svelte.dev/docs/form-actions)
-*   **Svelte 5 - `$props`:** [https://svelte.dev/docs/svelte-components#script-props](https://svelte.dev/docs/svelte-components#script-props)
+*   **Better Auth - Svelte Client:** [https://www.better-auth.com/docs/clients/svelte](https://www.better-auth.com/docs/clients/svelte)
+*   **Better Auth - Email & Password Sign In:** [https://www.better-auth.com/docs/authentication/email-password](https://www.better-auth.com/docs/authentication/email-password)
