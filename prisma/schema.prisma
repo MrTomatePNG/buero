@@ -21,12 +21,12 @@ enum PostStatus {
 }
 
 model User {
-  id        String  @id @unique @default(cuid())
-  username  String  @unique @db.VarChar(30)
-  email     String  @unique @db.VarChar(255)
-  password  String  @db.Text
-  avatarUrl String? @db.Text
-  bio       String? @db.VarChar(160)
+  id       String @id @default(cuid())
+  username String @unique @db.VarChar(30)
+  email    String @unique @db.VarChar(255)
+  password String @db.Text
+
+  profile UserProfile?
 
   sessions Session[]
   posts    Post[]
@@ -35,6 +35,15 @@ model User {
   updatedAt DateTime @updatedAt @db.Timestamptz()
 
   @@index([username])
+}
+
+model UserProfile {
+  id        String  @id @default(cuid())
+  avatarUrl String? @db.Text
+  bio       String? @db.VarChar(160)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Session {
