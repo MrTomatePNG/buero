@@ -2,52 +2,85 @@
 
 ## 1. Objetivo
 
-O objetivo desta tarefa é estabelecer a camada fundamental do sistema de autenticação utilizando Lucia Auth. A implementação se concentrará exclusivamente na lógica de backend, sem desenvolvimento de interface de usuário. Ao final, o sistema deverá ser capaz de gerenciar e validar sessões de usuários de forma programática.
+O objetivo desta tarefa é estabelecer a camada fundamental do sistema de autenticação utilizando **Lucia Auth v3**. A implementação se concentrará exclusivamente na lógica de backend. Ao final, o sistema deverá ser capaz de gerenciar e validar sessões de usuários de forma programática, alinhado com as versões de `lucia@3.2.2` e `@sveltejs/kit@2.50.2`.
 
 ## 2. Componentes a Implementar
 
 ### 2.1. Schema de Dados (`prisma/schema.prisma`)
-O schema do Prisma deve ser estendido para suportar os modelos exigidos pela Lucia Auth.
-*   **Requisito:** Os modelos `User`, `Session` e `Key` devem ser definidos ou ajustados.
-*   **Especificação:** O tipo de dado para os campos de ID (`id`) deve ser `String`, utilizando `cuid()` como valor padrão para garantir identificadores únicos e não sequenciais. Chaves estrangeiras relacionadas devem ser atualizadas correspondentemente.
+O schema do Prisma deve ser definido para suportar os modelos exigidos pela Lucia v3. Notavelmente, a tabela `Key` não é mais necessária para autenticação de senha, pois essa lógica foi internalizada.
+
+*   **Requisito:** Os modelos `User` e `Session` devem ser definidos.
+*   **Especificação:** O tipo de dado para os campos de ID deve ser `String`. O `id` do usuário deve ter um provedor de função como `cuid()` ou `uuid()`.
+
+    ```prisma
+    model User {
+      id        String    @id @default(cuid())
+      username  String    @unique
+      // Atributos para autenticação de senha são gerenciados pela Lucia internamente
+      // e não requerem mais um campo de senha explícito no modelo User.
+      
+      // Relação com Lucia
+      sessions  Session[]
+    }
+
+    model Session {
+      id        String   @id
+      expiresAt DateTime
+      userId    String
+      user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    }
+    ```
 
 ### 2.2. Singleton de Autenticação (`src/lib/server/auth.ts`)
 Um módulo deve ser criado para centralizar a inicialização e configuração da instância da Lucia.
 *   **Requisito:** Este arquivo deve exportar uma única instância `lucia`.
-*   **Especificação:** O módulo deve utilizar o `PrismaAdapter` para conectar a Lucia ao banco de dados. A configuração deve definir os atributos do usuário a serem incluídos no objeto de sessão (e.g., `username`, `email`) e garantir que cookies seguros (`secure: true`) sejam utilizados em ambiente de produção (`!dev`).
+*   **Especificação:** O módulo deve utilizar o `PrismaAdapter`. A configuração deve definir os `userAttributes` a serem incluídos no objeto `user` da sessão e garantir que cookies seguros (`secure: true`) sejam utilizados em ambiente de produção.
+
+    ```typescript
+    // src/lib/server/auth.ts
+    import { Lucia } from "lucia";
+    import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
+    import { prisma } from "$lib/server/prisma"; // Assumindo a existência deste client
+    import { dev } from "$app/environment";
+
+    const adapter = new PrismaAdapter(prisma.session, prisma.user);
+
+    export const lucia = new Lucia(adapter, {
+        sessionCookie: {
+            attributes: {
+                secure: !dev
+            }
+        },
+        getUserAttributes: (attributes) => {
+            return {
+                username: attributes.username
+            };
+        }
+    });
+
+    declare module "lucia" {
+        interface Register {
+            Lucia: typeof lucia;
+            DatabaseUserAttributes: {
+                username: string;
+            };
+        }
+    }
+    ```
 
 ### 2.3. Hook de Servidor (`src/hooks.server.ts`)
 Este middleware é responsável por interceptar todas as requisições e validar a identidade do usuário.
-*   **Requisito:** Implementar o hook `handle` para inspecionar o cookie de sessão em cada requisição.
-*   **Especificação:** O hook deve:
-    1.  Extrair o `sessionId` do cookie da requisição.
-    2.  Utilizar `lucia.validateSession(sessionId)` para validar a sessão.
-    3.  Se a sessão for válida, popular `event.locals.user` e `event.locals.session` com os dados retornados.
-    4.  Se a sessão for válida e tiver sido atualizada (`session.fresh`), definir um novo cookie de sessão na resposta.
-    5.  Se a sessão for inválida, limpar `event.locals` e, se necessário, o cookie no navegador.
+*   **Requisito:** Implementar o hook `handle` para validar a sessão em cada requisição.
+*   **Especificação:** O hook deve extrair o `sessionId`, validar a sessão com `lucia.validateSession()`, e popular `event.locals.user` e `event.locals.session`.
 
 ## 3. Critérios de Aceitação
 
-*   **CA-1:** O schema do Prisma foi migrado com sucesso para o banco de dados (`npx prisma migrate dev`), e os novos modelos existem na base de dados.
+*   **CA-1:** O schema do Prisma (`User`, `Session`) foi migrado com sucesso para o banco de dados.
 *   **CA-2:** O arquivo `src/lib/server/auth.ts` foi criado e não apresenta erros de compilação.
-*   **CA-3:** O arquivo `src/hooks.server.ts` foi criado e não apresenta erros de compilação.
-*   **CA-4 (Validação Funcional):** É possível adicionar o seguinte código a um endpoint de página (e.g., `src/routes/+page.server.ts`) para verificar o funcionamento do hook:
-
-    ```typescript
-    import type { PageServerLoad } from './$types';
-
-    export const load: PageServerLoad = async ({ locals }) => {
-        // Validação: O console do servidor deve exibir 'null' ao acessar a página.
-        console.log('User from locals:', locals.user);
-        return {
-            user: locals.user
-        };
-    };
-    ```
-    Acessar a rota correspondente deve resultar na exibição de `User from locals: null` no console do processo do SvelteKit, confirmando que o hook foi executado e `locals.user` está sendo corretamente definido (como nulo, nesta fase).
+*   **CA-3:** O arquivo `src/hooks.server.ts` foi criado, e o acesso a qualquer rota do servidor imprime `null` para `locals.user` no console, confirmando a execução do hook.
 
 ## 4. Referências Técnicas
 
-*   **Documentação Lucia Auth - SvelteKit:** [https://lucia-auth.com/getting-started/sveltekit](https://lucia-auth.com/getting-started/sveltekit)
-*   **Documentação Lucia Auth - Prisma Adapter:** [https://lucia-auth.com/database/prisma](https://lucia-auth.com/database/prisma)
-*   **Documentação SvelteKit - Hooks:** [https://kit.svelte.dev/docs/hooks](https://kit.svelte.dev/docs/hooks)
+*   **Lucia Auth v3 - SvelteKit:** [https://lucia-auth.com/getting-started/sveltekit](https://lucia-auth.com/getting-started/sveltekit)
+*   **Lucia Auth v3 - Prisma Adapter:** [https://lucia-auth.com/database/prisma](https://lucia-auth.com/database/prisma)
+*   **Svelte 5 - Runas (se aplicável em UI):** [https://svelte.dev/docs/runes](https://svelte.dev/docs/runes)
