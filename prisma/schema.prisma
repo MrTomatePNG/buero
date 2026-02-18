@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../src/prisma"
+  output   = "../src/lib/prisma"
 }
 
 datasource db {
@@ -31,10 +31,16 @@ model User {
   sessions Session[]
   posts    Post[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz()
-  updatedAt DateTime @updatedAt @db.Timestamptz()
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  name          String
+  emailVerified Boolean   @default(false)
+  image         String?
+  accounts      Account[]
 
   @@index([username])
+  @@map("user")
 }
 
 model UserProfile {
@@ -44,6 +50,8 @@ model UserProfile {
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profile")
 }
 
 model Session {
@@ -51,6 +59,15 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
 }
 
 model Post {
@@ -71,11 +88,13 @@ model Post {
   // Relação com tags
   tags PostTag[]
 
-  createdAt DateTime @default(now()) @db.Timestamp()
-  updatedAt DateTime @updatedAt @db.Timestamp()
+  createdAt DateTime @default(now()) @db.Timestamp
+  updatedAt DateTime @updatedAt @db.Timestamp
 
-  @@index([status]) // Índice onde status = 'completed' é automático
+  // Índice onde status = 'completed' é automático
+  @@index([status])
   @@index([createdAt(sort: Desc)])
+  @@map("posts")
 }
 
 enum MediaType {
@@ -88,6 +107,8 @@ model Tag {
   name String @unique @db.Text
 
   posts PostTag[]
+
+  @@map("tag")
 }
 
 model PostTag {
@@ -100,4 +121,37 @@ model PostTag {
   @@id([postId, tagId])
   @@index([postId])
   @@index([tagId])
+  @@map("post_tag")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }
