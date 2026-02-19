@@ -10,9 +10,8 @@ const config = {
     // See https://svelte.dev/docs/kit/adapters for more information about adapters.
     adapter: adapter(),
     alias: {
-      "@": path.resolve("src"),
+      "@/*": path.resolve("src/*"),
       $generated: path.resolve("genereted/prisma/*"),
-      $lib: path.resolve("src/lib"),
     },
   },
   preprocess: sveltePreprocess({ scss: true }),
