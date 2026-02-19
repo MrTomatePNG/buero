@@ -1,4 +1,5 @@
 import adapter from "@sveltejs/adapter-node";
+import path from "path";
 import { sveltePreprocess } from "svelte-preprocess";
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -9,7 +10,9 @@ const config = {
     // See https://svelte.dev/docs/kit/adapters for more information about adapters.
     adapter: adapter(),
     alias: {
-      "@/prisma": "./generated/prisma",
+      "@": path.resolve("src"),
+      $generated: path.resolve("genereted/prisma/*"),
+      $lib: path.resolve("src/lib"),
     },
   },
   preprocess: sveltePreprocess({ scss: true }),
