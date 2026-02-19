@@ -1,16 +1,49 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
-  output   = "../src/lib/prisma"
+  output   = "../src/genereted/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Post {
+  id        BigInt     @id @default(autoincrement())
+  userId    String
+  comment   String?
+  mediaHash String     @db.VarChar(64)
+  mediaType MediaType
+  mediaUrl  String?
+  thumbUrl  String?
+  status    PostStatus @default(pending)
+  createdAt DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt DateTime   @updatedAt @db.Timestamp(6)
+  tags      PostTag[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("posts")
+}
+
+model Tag {
+  id    Int       @id @default(autoincrement())
+  name  String    @unique
+  posts PostTag[]
+
+  @@map("tag")
+}
+
+model PostTag {
+  postId BigInt
+  tagId  Int
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([postId])
+  @@index([tagId])
+  @@map("post_tag")
 }
 
 enum PostStatus {
@@ -20,110 +53,60 @@ enum PostStatus {
   failed
 }
 
+enum MediaType {
+  image
+  video
+}
+
 model User {
-  id       String @id @default(cuid())
-  username String @unique @db.VarChar(30)
-  email    String @unique @db.VarChar(255)
-  password String @db.Text
-
-  profile UserProfile?
-
-  sessions Session[]
-  posts    Post[]
-
-  createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt @db.Timestamptz
-
-  name          String
-  emailVerified Boolean   @default(false)
+  id            String       @id @default(cuid())
+  username      String       @unique @db.VarChar(30)
+  email         String       @unique @db.VarChar(255)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(6)
+  emailVerified Boolean      @default(false)
   image         String?
+  role          Role         @default(user)
   accounts      Account[]
+  posts         Post[]
+  sessions      Session[]
+  profile       UserProfile?
 
-  role String? @default("user")
+  displayUsername String?
 
   @@index([username])
   @@map("user")
 }
 
+enum Role {
+  user
+  admin
+}
+
 model UserProfile {
   id        String  @id @default(cuid())
-  avatarUrl String? @db.Text
+  avatarUrl String?
   bio       String? @db.VarChar(160)
-
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_profile")
 }
 
 model Session {
-  id        String   @id @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id
   expiresAt DateTime
   token     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
   userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([token])
   @@index([userId])
   @@map("session")
-}
-
-model Post {
-  id     BigInt @id @default(autoincrement())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  comment String? @db.Text
-
-  // Media
-  mediaHash String    @db.VarChar(64)
-  mediaType MediaType // 'image' ou 'video'
-  mediaUrl  String?   @db.Text
-  thumbUrl  String?   @db.Text
-
-  status PostStatus @default(pending)
-
-  // Relação com tags
-  tags PostTag[]
-
-  createdAt DateTime @default(now()) @db.Timestamp
-  updatedAt DateTime @updatedAt @db.Timestamp
-
-  // Índice onde status = 'completed' é automático
-  @@index([status])
-  @@index([createdAt(sort: Desc)])
-  @@map("posts")
-}
-
-enum MediaType {
-  image
-  video
-}
-
-model Tag {
-  id   Int    @id @default(autoincrement())
-  name String @unique @db.Text
-
-  posts PostTag[]
-
-  @@map("tag")
-}
-
-model PostTag {
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId BigInt
-
-  tag   Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  tagId Int
-
-  @@id([postId, tagId])
-  @@index([postId])
-  @@index([tagId])
-  @@map("post_tag")
 }
 
 model Account {
