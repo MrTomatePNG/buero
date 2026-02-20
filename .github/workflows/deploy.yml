@@ -61,6 +61,7 @@ jobs:
             set -e
             export PATH="/home/cauldrun/.bun/bin:$PATH"
             export DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}"
+            export BETTER_AUTH_BASE_URL="${{ secrets.PROD_BETTER_AUTH_BASE_URL }}"
             cd /opt/cauldrun
             bash scripts/4_build.sh
 
