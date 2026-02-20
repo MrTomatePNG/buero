@@ -1,21 +1,38 @@
 <script>
     import "../app.scss";
-    import { MessageCircle, House, User } from "lucide-svelte";
+    import { page } from "$app/state";
+    import { MessageCircle, House, User, Bell } from "lucide-svelte";
     let { children } = $props();
 </script>
 
 <main class="main">
     {@render children()}
     <nav class="bottom-nav">
-        <a href="/chats" class="nav-link">
+        <a
+            href="/chats"
+            class="nav-link"
+            class:active={page.url.pathname == "/chats"}
+        >
             <MessageCircle />
             <span>Chats</span>
         </a>
-        <a href="/" class="nav-link">
+        <a href="/" class="nav-link" class:active={page.url.pathname == "/"}>
             <House />
             <span>Home</span>
         </a>
-        <a href="/profile" class="nav-link">
+        <a
+            href="/notif"
+            class="nav-link"
+            class:active={page.url.pathname == "/notif"}
+        >
+            <Bell />
+            <span>Notficações</span>
+        </a>
+        <a
+            href="/profile"
+            class="nav-link"
+            class:active={page.url.pathname === "/profile"}
+        >
             <User />
             <span>Perfil</span>
         </a>
