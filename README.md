@@ -1,8 +1,8 @@
-# Projeto Cauldron: Roteiro Técnico
+# Projeto Sewer Comedy: Roteiro Técnico
 
 ## 1. Introdução
 
-Este documento delineia o plano de desenvolvimento estratégico para o projeto Cauldron. O objetivo é fornecer uma estrutura de marcos e tarefas sequenciais para a construção de uma plataforma de mídia social. A metodologia foca em entregas incrementais com critérios de aceitação claros para cada fase.
+Este documento delineia o plano de desenvolvimento estratégico para o projeto Sewer Comedy. O objetivo é fornecer uma estrutura de marcos e tarefas sequenciais para a construção de uma plataforma de mídia social. A metodologia foca em entregas incrementais com critérios de aceitação claros para cada fase.
 
 ### 1.1. Stack Tecnológica de Referência
 *   **Framework:** SvelteKit (Svelte 5)

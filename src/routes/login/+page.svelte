@@ -51,7 +51,7 @@
             {#if !isLogin}
                 <input 
                     type="text" 
-                    placeholder="Nome" 
+                    placeholder="Username" 
                     bind:value={name} 
                     class="minimal-input"
                     autocomplete="name"

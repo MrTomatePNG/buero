@@ -11,7 +11,7 @@
 
 <div class="page-container">
     <div class="card">
-        <h1>🚧 Cauldron 🚧</h1>
+        <h1>🚧 Sewer Comedy 🚧</h1>
         <p>Desenvolvimento em progresso.</p>
         <div class="stats">
             Visitas: <span>{visits}</span>
