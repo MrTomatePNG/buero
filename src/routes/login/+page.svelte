@@ -119,7 +119,7 @@
 
     .minimal-input {
         background: var(--surface);
-        border: 1px solid rgba(var(--text-muted), 0.1);
+        border: 1px solid var(--border);
         padding: 14px;
         border-radius: 8px;
         color: var(--text);
@@ -128,13 +128,13 @@
 
         &:focus {
             outline: none;
-            border-color: var(--accent);
-            background: var(--bg);
+            border-color: var(--secondary);
+            background: rgba(218, 138, 103, 0.05);
         }
 
         &::placeholder {
-            color: var(--text-muted);
-            opacity: 0.5;
+            color: var(--secondary);
+            opacity: 0.4;
         }
     }
 
@@ -145,13 +145,14 @@
         padding: 14px;
         border-radius: 8px;
         font-size: 0.95rem;
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
-        transition: opacity 0.2s, transform 0.1s active;
+        transition: all 0.2s;
 
         &:disabled {
-            opacity: 0.3;
+            opacity: 0.2;
             cursor: not-allowed;
+            filter: grayscale(1);
         }
 
         &:active:not(:disabled) {

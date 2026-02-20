@@ -60,15 +60,15 @@
     }
 
     .bottom-nav {
-        height: 64px; // Altura fixa e proporcional
-        flex-shrink: 0; // Impede que a nav encolha
+        height: 64px;
+        flex-shrink: 0;
         display: flex;
         justify-content: space-around;
         align-items: center;
         background-color: var(--surface);
-        border-top: 1px solid rgba(var(--text-muted), 0.1);
-        padding-bottom: env(safe-area-inset-bottom); // Suporte para iPhone (notch inferior)
-        box-sizing: content-box; // Garante que o padding do iPhone não altere a altura base
+        border-top: 1px solid var(--border);
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: content-box;
         z-index: 10;
     }
 
@@ -80,8 +80,9 @@
         flex: 1;
         height: 100%;
         text-decoration: none;
-        color: var(--text-muted);
-        transition: color 0.2s ease;
+        color: var(--secondary); // Cor de ferrugem para o estado inativo
+        transition: all 0.2s ease;
+        opacity: 0.6;
 
         span {
             font-size: 10px;
@@ -90,7 +91,9 @@
         }
 
         &.active {
-            color: var(--accent);
+            color: var(--accent); // Verde fluorescente para o ativo
+            opacity: 1;
+            filter: drop-shadow(0 0 5px rgba(163, 255, 0, 0.3));
         }
     }
 </style>
