@@ -11,10 +11,8 @@ const config = {
     adapter: adapter(),
     alias: {
       "@/*": path.resolve("src/*"),
-      $generated: path.resolve("genereted/prisma/*"),
     },
   },
-
   preprocess: sveltePreprocess({
     scss: {},
   }),
