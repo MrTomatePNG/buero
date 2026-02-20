@@ -25,12 +25,18 @@ $dark-text-muted: color.mix($peach-soft, $charcoal-black, 60%);
 $dark-accent: $orange-muted;
 $dark-accent-soft: color.mix(black, $orange-muted, 40%);
 
+* {
+    box-sizing: border-box;
+}
+
 html,
 body {
     width: 100%;
-    height: 100%;
+    height: 100svh; // Use short viewport height for mobile browsers
     margin: 0;
     padding: 0;
+    overflow: hidden; // Critical: prevents the 'loose' sliding feel
+    position: fixed; // Helps lock the viewport on iOS
 
     // Default: Light Mode
     --bg: #{$light-background};
