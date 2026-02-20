@@ -5,19 +5,22 @@
     let { children } = $props();
 </script>
 
-<main class="main">
-    {@render children()}
+<div class="app-shell">
+    <main class="content">
+        {@render children()}
+    </main>
+
     <nav class="bottom-nav">
         <a
             href="/chats"
             class="nav-link"
             class:active={page.url.pathname == "/chats"}
         >
-            <MessageCircle />
+            <MessageCircle size={24} />
             <span>Chats</span>
         </a>
         <a href="/" class="nav-link" class:active={page.url.pathname == "/"}>
-            <House />
+            <House size={24} />
             <span>Home</span>
         </a>
         <a
@@ -25,39 +28,48 @@
             class="nav-link"
             class:active={page.url.pathname == "/notif"}
         >
-            <Bell />
-            <span>Notficações</span>
+            <Bell size={24} />
+            <span>Notificações</span>
         </a>
         <a
             href="/profile"
             class="nav-link"
             class:active={page.url.pathname === "/profile"}
         >
-            <User />
+            <User size={24} />
             <span>Perfil</span>
         </a>
     </nav>
-</main>
+</div>
 
 <style lang="scss">
-    /* Importa variáveis globais de cor - ajuste o caminho se necessário */
-    /* @use "../app.scss"; */
+    .app-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100svh; // Altura fixa da tela
+        width: 100%;
+        overflow: hidden;
+        background-color: var(--bg);
+    }
+
+    .content {
+        flex: 1; // Ocupa todo o espaço restante
+        overflow-y: auto; // Permite rolagem APENAS aqui dentro
+        -webkit-overflow-scrolling: touch; // Suaviza rolagem no iOS
+        position: relative;
+    }
 
     .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
+        height: 64px; // Altura fixa e proporcional
+        flex-shrink: 0; // Impede que a nav encolha
         display: flex;
         justify-content: space-around;
         align-items: center;
-        background-color: var(--surface); /* Usa a cor de superfície do tema */
-        padding: 12px 0;
-        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.15);
-        border-top: 1px solid rgba(var(--text-muted), 0.2);
-        border-radius: 16px 16px 0 0; /* Cantos arredondados no topo */
-        backdrop-filter: blur(10px); /* Efeito de vidro fosco */
-        z-index: 1000;
+        background-color: var(--surface);
+        border-top: 1px solid rgba(var(--text-muted), 0.1);
+        padding-bottom: env(safe-area-inset-bottom); // Suporte para iPhone (notch inferior)
+        box-sizing: content-box; // Garante que o padding do iPhone não altere a altura base
+        z-index: 10;
     }
 
     .nav-link {
@@ -66,43 +78,19 @@
         align-items: center;
         justify-content: center;
         flex: 1;
-        padding: 8px 0;
+        height: 100%;
         text-decoration: none;
-        color: var(--text-muted); /* Cor padrão mais suave */
-        transition:
-            color 0.3s ease,
-            transform 0.2s ease;
-
-        svg {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 4px;
-        }
+        color: var(--text-muted);
+        transition: color 0.2s ease;
 
         span {
-            font-size: 0.8em;
+            font-size: 10px;
+            margin-top: 4px;
             font-weight: 500;
         }
 
-        &:hover {
-            color: var(--accent); /* Cor de destaque no hover */
-        }
-
-        /* Estilo para o link ativo (você pode precisar de lógica SvelteKit para isso) */
         &.active {
-            color: var(
-                --accent
-            ); /* Mesmo que hover, ou uma cor mais vibrante */
-            font-weight: bold;
-
-            svg {
-                transform: scale(1.1);
-            }
+            color: var(--accent);
         }
-    }
-
-    /* Ajuste para o main para que o conteúdo não fique escondido sob a nav */
-    .main {
-        padding-bottom: 80px; /* Espaço para a altura da nav bar + padding */
     }
 </style>
