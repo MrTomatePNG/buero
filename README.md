@@ -21,9 +21,9 @@ O projeto está segmentado em três marcos principais. Cada marco agrupa um conj
 
 | Tarefa ID | Descrição da Tarefa                   | Critérios de Aceitação                                                              | Documento Técnico                                    | Status |
 | :-------- | :------------------------------------ | :---------------------------------------------------------------------------------- | :--------------------------------------------------- | :----- |
-| **01**    | **Implementação do Core de Autenticação** | O sistema deve ser capaz de validar sessões via hooks do servidor.                  | [TASK-01](./.docs/TASK-01-Autenticacao-Core.md)      | [ X ]    |
-| **02**    | **Desenvolvimento da UI de Autenticação** | Formulários de registro e login devem interagir com a API de autenticação.          | [TASK-02](./.docs/TASK-02-Autenticacao-UI.md)        | [ ]    |
-| **03**    | **Controle de Acesso e Perfil Básico**    | Rotas protegidas devem redirecionar usuários não autenticados. Usuário logado acessa uma página de perfil. | [TASK-03](./.docs/TASK-03-Controle-Acesso.md)        | [ ]    |
+| **01**    | **Implementação do Core de Autenticação** | O sistema deve ser capaz de validar sessões via hooks do servidor.                  | [TASK-01](./.docs/TASK-01-Autenticacao-Core.md)      | ✅ |
+| **02**    | **Desenvolvimento da UI de Autenticação** | Formulários de registro e login devem interagir com a API de autenticação.          | [TASK-02](./.docs/TASK-02-Autenticacao-UI.md)        | ✅ |
+| **03**    | **Controle de Acesso e Perfil Básico**    | Rotas protegidas devem redirecionar usuários não autenticados. Usuário logado acessa uma página de perfil. | [TASK-03](./.docs/TASK-03-Controle-Acesso.md)        | ✅ |
 
 ### Milestone 2: Gestão de Conteúdo Multimídia
 **Objetivo:** Implementar a capacidade dos usuários de criar, publicar e visualizar conteúdo na plataforma.
