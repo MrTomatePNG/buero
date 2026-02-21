@@ -6,40 +6,44 @@ import { baseLogger } from "$lib/server/logger";
 import type { Handle } from "@sveltejs/kit";
 
 const logger: Handle = async ({ event, resolve }) => {
-	const start = Date.now();
-	const requestId = crypto.randomUUID();
-	
-	// Injetar logger contextualizado no locals
-	const requestLogger = baseLogger.child({ 
-		requestId,
-		method: event.request.method,
-		url: event.url.pathname 
-	});
-	
-	event.locals.logger = requestLogger;
-	event.locals.requestId = requestId;
+  const start = Date.now();
+  const requestId = crypto.randomUUID();
 
-	const response = await resolve(event);
+  event.locals.logger = baseLogger.child({
+    requestId,
+    method: event.request.method,
+    url: event.url.pathname,
+  });
+  event.locals.requestId = requestId;
 
-	const duration = Date.now() - start;
-	requestLogger.info({ status: response.status, duration: `${duration}ms` }, "Request completed");
+  const response = await resolve(event);
 
-	return response;
+  const duration = Date.now() - start;
+  event.locals.logger.info(
+    { status: response.status, duration: `${duration}ms` },
+    "Request completed",
+  );
+
+  return response;
 };
 
-const authHandle: Handle = async ({ event, resolve }) => {
-	const session = await auth.api.getSession({
-		headers: event.request.headers,
-	});
+const authHandle: Handle = ({ event, resolve }) =>
+  svelteKitHandler({ event, resolve, auth, building });
 
-	if (session) {
-		event.locals.session = session.session;
-		event.locals.user = session.user;
-		// Adiciona o userId ao log se disponível
-		event.locals.logger.info({ userId: session.user.id }, "User session identified");
-	}
+const sessionHandle: Handle = async ({ event, resolve }) => {
+  const session = await auth.api.getSession({
+    headers: event.request.headers,
+  });
 
-	return svelteKitHandler({ event, resolve, auth, building });
+  if (session) {
+    event.locals.session = session.session;
+    event.locals.user = session.user;
+    event.locals.logger = event.locals.logger.child({
+      userId: session.user.id,
+    });
+  }
+
+  return resolve(event);
 };
 
-export const handle = sequence(logger, authHandle);
+export const handle = sequence(logger, authHandle, sessionHandle);
