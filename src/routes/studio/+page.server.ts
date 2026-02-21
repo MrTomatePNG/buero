@@ -57,7 +57,7 @@ export const actions: Actions = {
 				Metadata: { userId: locals.user.id }
 			}));
 
-			const mediaUrl = `${S3_ENDPOINT}/${bucketName}/${fileKey}`;
+			const mediaUrl = `https://media.sewercomedy.fun/${fileKey}`;
 
 			await prisma.post.create({
 				data: {
