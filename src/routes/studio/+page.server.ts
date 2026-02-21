@@ -6,76 +6,74 @@ import prisma from "$lib/prisma";
 import { S3_ENDPOINT } from "$env/static/private";
 
 export const load: PageServerLoad = ({ locals }) => {
-  if (!locals.user) redirect(302, "/login");
+	if (!locals.user) redirect(302, "/login");
 
-  return {
-    user: {
-      id: locals.user.id,
-      name: locals.user.name,
-    },
-  };
+	return {
+		user: {
+			id: locals.user.id,
+			name: locals.user.name,
+		},
+	};
 };
 
 export const actions: Actions = {
-  upload: async ({ locals, request }) => {
-    if (!locals.user) redirect(302, "/login");
+	upload: async ({ locals, request }) => {
+		if (!locals.user) redirect(302, "/login");
 
-    const formData = await request.formData();
-    const comment = formData.get("comment")?.toString();
-    const media = formData.get("media");
+		const formData = await request.formData();
+		const comment = formData.get("comment")?.toString();
+		const media = formData.get("media");
 
-    if (!(media instanceof File)) {
-      return fail(400, { message: "Arquivo inválido" });
-    }
+		if (!(media instanceof File)) {
+			return fail(400, { message: "Arquivo inválido." });
+		}
 
-    // Validações Básicas
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-    if (media.size > MAX_SIZE)
-      return fail(400, { message: "Arquivo muito grande (Máx 10MB)" });
+		// 1. Validações de Tamanho e Tipo
+		const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+		if (media.size > MAX_SIZE) return fail(400, { message: "Arquivo excede o limite de 10MB." });
 
-    const ALLOWED_TYPES = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "video/mp4",
-    ];
-    if (!ALLOWED_TYPES.includes(media.type))
-      return fail(400, { message: "Formato não suportado" });
+		const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "video/mp4"];
+		if (!ALLOWED_MIME_TYPES.includes(media.type)) {
+			return fail(400, { message: "Tipo de arquivo não permitido." });
+		}
 
-    try {
-      // 1. Preparar o arquivo
-      const buffer = Buffer.from(await media.arrayBuffer());
-      const fileExtension = media.name.split(".").pop();
-      const fileKey = `uploads/${locals.user.id}/${Date.now()}-${crypto.randomUUID()}.${fileExtension}`;
+		try {
+			// 2. Preparar Key Segura (ignora nome original para evitar injeção)
+			const buffer = Buffer.from(await media.arrayBuffer());
+			const extension = media.type.split("/")[1]; // Pega a extensão do MIME type real
+			const fileName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+			const fileKey = `uploads/${locals.user.id}/${fileName}`;
 
-      // 2. Upload para S3
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: bucketName,
-          Key: fileKey,
-          Body: buffer,
-          ContentType: media.type,
-        }),
-      );
+			// 3. Upload para S3 com metadados de segurança
+			await s3Client.send(new PutObjectCommand({
+				Bucket: bucketName,
+				Key: fileKey,
+				Body: buffer,
+				ContentType: media.type,
+				Metadata: {
+					originalName: encodeURIComponent(media.name),
+					userId: locals.user.id
+				}
+			}));
 
-      // 3. Gerar URL (Construída manualmente para compatibilidade MinIO/Magalu)
-      const mediaUrl = `${S3_ENDPOINT}/${bucketName}/${fileKey}`;
+			// 4. Construir URL
+			const mediaUrl = `${S3_ENDPOINT}/${bucketName}/${fileKey}`;
 
-      // 4. Salvar no Prisma
-      await prisma.post.create({
-        data: {
-          userId: locals.user.id,
-          comment: comment || "",
-          mediaUrl: mediaUrl,
-          mediaType: media.type.startsWith("video") ? "video" : "image",
-          status: "pending", // Vital: vai para auditoria
-        },
-      });
+			// 5. Persistir no Banco
+			await prisma.post.create({
+				data: {
+					userId: locals.user.id,
+					comment: comment?.slice(0, 500) || "", // Limita tamanho da legenda
+					mediaUrl: mediaUrl,
+					mediaType: media.type.startsWith("video") ? "video" : "image",
+					status: "pending",
+				}
+			});
 
-      return { success: true };
-    } catch (e) {
-      console.error("Erro no upload:", e);
-      return fail(500, { message: "Erro interno ao processar upload" });
-    }
-  },
+			return { success: true };
+		} catch (err) {
+			console.error("Erro crítico no upload:", err);
+			return fail(500, { message: "Falha ao processar arquivo. Tente novamente." });
+		}
+	},
 };
