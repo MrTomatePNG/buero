@@ -6,7 +6,9 @@ export const apps = [
     interpreter: "node",
     env: {
       NODE_ENV: "production",
-      PORT: 3000
+      PORT: 3000,
+      BODY_SIZE_LIMIT: "10M",
+      ORIGIN: "https://sewercomedy.fun"
     }
   },
 ];
