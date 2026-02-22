@@ -84,6 +84,7 @@ jobs:
             RESEND_API_KEY="${{ secrets.PROD_RESEND_API_KEY }}" \
             ORIGIN="https://sewercomedy.fun" \
             NODE_ENV="production" \
+            BODY_SIZE_LIMIT="10M" \
             pm2 restart sewer-app --update-env || \
             DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}" \
             BETTER_AUTH_SECRET="${{ secrets.PROD_BETTER_AUTH_SECRET }}" \
@@ -96,6 +97,7 @@ jobs:
             RESEND_API_KEY="${{ secrets.PROD_RESEND_API_KEY }}" \
             ORIGIN="https://sewercomedy.fun" \
             NODE_ENV="production" \
+            BODY_SIZE_LIMIT="10M" \
             pm2 start ecosystem.config.js
 
             pm2 save
