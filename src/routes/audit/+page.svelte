@@ -40,18 +40,29 @@
                     class:processing={isLoading === post.id.toString()}
                 >
                     <div class="media-container">
-                        <img
-                            src={post.mediaUrl}
-                            alt="Preview"
-                            onerror={(e) => {
-                                console.error(
-                                    "Erro ao carregar imagem:",
-                                    post.mediaUrl,
-                                );
-                                (e.currentTarget as HTMLImageElement).src =
-                                    "https://placehold.co/400x400/161616/da8a67?text=Erro+no+S3";
-                            }}
-                        />
+                        {#if post.mediaType === "video"}
+                            <video
+                                src={post.mediaUrl}
+                                muted
+                                autoplay
+                                loop
+                                playsinline
+                                controls
+                            ></video>
+                        {:else}
+                            <img
+                                src={post.mediaUrl}
+                                alt="Preview"
+                                onerror={(e) => {
+                                    console.error(
+                                        "Erro ao carregar imagem:",
+                                        post.mediaUrl,
+                                    );
+                                    (e.currentTarget as HTMLImageElement).src =
+                                        "https://placehold.co/400x400/161616/da8a67?text=Erro+no+S3";
+                                }}
+                            />
+                        {/if}
                         {#if isLoading === post.id.toString()}
                             <div class="loading-overlay">
                                 <LoaderCircle size={32} class="spinner" />
@@ -188,7 +199,9 @@
             aspect-ratio: 1;
             background: #000;
             position: relative;
-            img {
+
+            img,
+            video {
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
