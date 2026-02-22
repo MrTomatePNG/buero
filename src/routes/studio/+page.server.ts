@@ -98,7 +98,7 @@ export const actions: Actions = {
         thumbUrl = mediaUrl;
       }
 
-      await prisma.post.create({
+      const post = await prisma.post.create({
         data: {
           userId: locals.user.id,
           comment: comment?.slice(0, 500) || "",
@@ -110,12 +110,17 @@ export const actions: Actions = {
       });
 
       locals.logger.info(
-        { userId: locals.user.id, fileKey },
+        { userId: locals.user.id, postId: post.id.toString(), fileKey },
         "Upload realizado com sucesso.",
       );
+      
       return { success: true };
-    } catch (err) {
-      locals.logger.error({ err }, "Erro crítico no upload");
+    } catch (err: any) {
+      locals.logger.error({ 
+        message: err.message, 
+        stack: err.stack,
+        userId: locals.user.id 
+      }, "Erro crítico no upload");
       return fail(500, { message: "Falha ao processar arquivo." });
     }
   },

@@ -25,8 +25,13 @@
             isVideo = true;
             previewUrl = URL.createObjectURL(file);
 
-            const thumbnailURL = await createVideoThumbnail(file);
-            thumbnailFile = dataUrlToFile(thumbnailURL, "thumbnail.jpg");
+            try {
+                const thumbnailURL = await createVideoThumbnail(file);
+                thumbnailFile = dataUrlToFile(thumbnailURL, "thumbnail.jpg");
+            } catch (err) {
+                console.error("Falha ao gerar thumbnail:", err);
+                thumbnailFile = null;
+            }
         } else {
             isVideo = false;
             previewUrl = URL.createObjectURL(file);

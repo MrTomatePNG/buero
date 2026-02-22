@@ -1,37 +1,59 @@
-// src/lib/utils/thumbnail.ts
 export function createVideoThumbnail(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     const url = URL.createObjectURL(file);
 
-    video.src = url; // ← faltava isso
+    video.src = url;
     video.muted = true;
     video.playsInline = true;
-    video.currentTime = 1; // pega o frame no segundo 1 (evita tela preta)
+    video.preload = "auto";
 
-    video.addEventListener("seeked", () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth; // ← videoWidth, não width
-      canvas.height = video.videoHeight; // ← videoHeight, não height
-
-      const ctx = canvas.getContext("2d");
-      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      const thumbnailUrl = canvas.toDataURL("image/jpeg", 0.8);
-
-      // limpa a memória
+    const cleanup = () => {
       URL.revokeObjectURL(url);
       video.remove();
+    };
 
-      resolve(thumbnailUrl);
-    });
+    video.onloadeddata = () => {
+      video.currentTime = 1; // Tenta capturar o frame no segundo 1
+    };
 
-    video.addEventListener("error", reject);
-    video.load(); // ← faltava isso
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const thumbnailUrl = canvas.toDataURL("image/jpeg", 0.8);
+          cleanup();
+          resolve(thumbnailUrl);
+        } else {
+          cleanup();
+          reject(new Error("Não foi possível obter o contexto do canvas"));
+        }
+      } catch (err) {
+        cleanup();
+        reject(err);
+      }
+    };
+
+    video.onerror = () => {
+      cleanup();
+      reject(new Error("Erro ao carregar o vídeo para thumbnail"));
+    };
+
+    // Timeout de segurança (5 segundos)
+    setTimeout(() => {
+      cleanup();
+      reject(new Error("Timeout ao gerar thumbnail"));
+    }, 5000);
+
+    video.load();
   });
 }
 
-// converte dataURL em File pra mandar pro backend
 export function dataUrlToFile(dataUrl: string, filename: string): File {
   const [header, data] = dataUrl.split(",");
   const mime = header.match(/:(.*?);/)?.[1] ?? "image/jpeg";
