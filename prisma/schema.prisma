@@ -12,8 +12,8 @@ model Post {
   userId    String
   comment   String?
   mediaType MediaType
-  mediaUrl  String?    @db.Text
-  thumbUrl  String?    @db.Text
+  mediaUrl  String     @db.Text
+  thumbUrl  String     @db.Text
   status    PostStatus @default(pending)
   createdAt DateTime   @default(now()) @db.Timestamp(6)
   updatedAt DateTime   @updatedAt @db.Timestamp(6)
