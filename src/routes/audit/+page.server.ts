@@ -83,11 +83,18 @@ export const actions: Actions = {
         if (!oldKey.includes("uploads/pending/")) return oldKey;
 
         const newKey = oldKey.replace("uploads/pending/", `uploads/${targetFolder}/`);
+        
+        const isPublic = targetFolder === "public";
+
         await s3Client.send(
           new CopyObjectCommand({
             Bucket: bucketName,
             CopySource: `${bucketName}/${oldKey}`,
             Key: newKey,
+            // Injetar cache agressivo se for para a pasta pública
+            CacheControl: isPublic ? "public, max-age=31536000, immutable" : "no-cache, no-store, must-revalidate",
+            ContentDisposition: "inline",
+            MetadataDirective: "REPLACE", // Necessário para aplicar o novo CacheControl
           }),
         );
         await s3Client.send(
