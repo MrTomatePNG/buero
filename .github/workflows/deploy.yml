@@ -48,7 +48,7 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: "build,package.json,bun.lock,prisma,ecosystem.config.js"
+          source: "build,package.json,bun.lock,prisma,ecosystem.config.js,Caddyfile"
           target: "/opt/sewer-comedy"
 
       - name: Finalize Deploy on VPS
