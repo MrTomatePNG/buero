@@ -1,18 +1,32 @@
 <script lang="ts">
-    import { ImagePlus, LoaderCircle, CheckCircle2 } from "lucide-svelte";
+    import { ImagePlus, LoaderCircle, CircleCheckBig } from "lucide-svelte";
     import { enhance } from "$app/forms";
     import { fade } from "svelte/transition";
+    import { createVideoThumbnail, dataUrlToFile } from "@/lib/utils/thumbs.js";
 
     let isLoading = $state(false);
     let success = $state(false);
     let previewUrl = $state<string | null>(null);
+
+    let thumbnailFile = $state<File | null>(null);
+    let isVideo = $state(false);
+
     let { data } = $props();
-    function handleFileChange(e: Event) {
+
+    const handleFileChange = async (e: Event) => {
         const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
+        if (!file) return;
+        if (file.type.startsWith("video/")) {
+            isVideo = true;
+            previewUrl = URL.createObjectURL(file);
+
+            const thumbnailURL = await createVideoThumbnail(file);
+            thumbnailFile = dataUrlToFile(thumbnailURL, "thumbnail.jpg");
+        } else {
+            isVideo = false;
             previewUrl = URL.createObjectURL(file);
         }
-    }
+    };
 </script>
 
 <div class="studio-page">
@@ -24,7 +38,7 @@
 
         {#if success}
             <div class="success-state" in:fade>
-                <CheckCircle2 size={48} color="var(--accent)" />
+                <CircleCheckBig size={48} color="var(--accent)" />
                 <h2>Post enviado!</h2>
                 <p>Aguardando aprovação dos auditores.</p>
                 <button
@@ -66,7 +80,21 @@
             >
                 <label class="media-upload" class:has-preview={previewUrl}>
                     {#if previewUrl}
-                        <img src={previewUrl} alt="Preview" class="preview" />
+                        {#if isVideo}
+                            <video
+                                src={previewUrl}
+                                muted
+                                autoplay
+                                loop
+                                class="preview"
+                            ></video>
+                        {:else}
+                            <img
+                                src={previewUrl}
+                                alt="Preview"
+                                class="preview"
+                            />
+                        {/if}
                     {:else}
                         <div class="placeholder">
                             <ImagePlus size={32} />
@@ -84,7 +112,7 @@
 
                 <textarea
                     name="comment"
-                    placeholder="Escreva algo ácido..."
+                    placeholder="Adicione um comentario..."
                     rows="3"
                 ></textarea>
 
