@@ -17,6 +17,9 @@ media.sewercomedy.fun {
 	@pending path /uploads/pending/*
 	respond @pending 403
 
+	# Desativa compressão para vídeos (evita quebrar Range Requests)
+	encode identity
+
 	cache
 
 	reverse_proxy https://sewer-comedy-s3.br-se1.magaluobjects.com {
@@ -25,11 +28,17 @@ media.sewercomedy.fun {
 			tls_insecure_skip_verify
 		}
 		header_up Host sewer-comedy-s3.br-se1.magaluobjects.com
+		# Força o S3 a não mandar GZIP
+		header_up Accept-Encoding identity
+		
 		header_down -Set-Cookie
 		header_down -Cache-Control
-		header_down +Cache-Control "public, max-age=21600"
+		header_down +Cache-Control "public, max-age=31536000, immutable"
+		# Garante que o navegador saiba que aceitamos Range
+		header_down +Accept-Ranges bytes
 	}
 }
+
 cauldrun.fun, www.cauldrun.fun {
 	redir https://sewercomedy.fun{uri} permanent
 }
