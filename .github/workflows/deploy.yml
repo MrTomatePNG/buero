@@ -16,21 +16,21 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Cache Bun Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: bun prisma generate
-        env:
-          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
-
-      - name: Run Migrations
-        run: bun prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
-
-      - name: Build Application
-        run: bun run build
+      - name: Prisma & Build
+        run: |
+          bun prisma generate
+          bun run build
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.PROD_BETTER_AUTH_SECRET }}
@@ -41,6 +41,7 @@ jobs:
           S3_SECRET_KEY: ${{ secrets.PROD_S3_SECRET_KEY }}
           S3_BUCKET_NAME: ${{ secrets.PROD_S3_BUCKET_NAME }}
           RESEND_API_KEY: ${{ secrets.PROD_RESEND_API_KEY }}
+          NODE_OPTIONS: "--max-old-space-size=6144"
 
       - name: Transfer Files to VPS
         uses: appleboy/scp-action@master
