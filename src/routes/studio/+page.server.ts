@@ -40,13 +40,6 @@ export const actions: Actions = {
       return fail(400, { message: "Arquivo inválido." });
     }
 
-    const buffer = Buffer.from(await media.arrayBuffer());
-    const detect = await fileTypeFromBuffer(buffer);
-
-    if (!detect || detect.mime !== media.type) {
-      return fail(400, { message: "arquivo inavlido" });
-    }
-
     const MAX_SIZE = 10 * 1024 * 1024;
     if (media.size > MAX_SIZE)
       return fail(400, { message: "Arquivo excede o limite de 10MB." });
@@ -61,8 +54,15 @@ export const actions: Actions = {
       return fail(400, { message: "Tipo de arquivo não permitido." });
     }
 
+    // Consumir o buffer uma única vez
+    const buffer = Buffer.from(await media.arrayBuffer());
+    const detect = await fileTypeFromBuffer(buffer);
+
+    if (!detect || detect.mime !== media.type) {
+      return fail(400, { message: "Arquivo corrompido ou tipo inválido." });
+    }
+
     try {
-      const buffer = Buffer.from(await media.arrayBuffer());
       const extension = media.type.split("/")[1];
       const fileName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
       const fileKey = `uploads/pending/${locals.user.id}/${fileName}`;
