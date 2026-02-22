@@ -83,7 +83,7 @@ export const actions: Actions = {
       let thumbUrl: string | null = null;
       if (thumbnail instanceof File) {
         const thumbBuffer = Buffer.from(await thumbnail.arrayBuffer());
-        const thumbKey = `thumbnails/${locals.user.id}/${Date.now()}.jpg`;
+        const thumbKey = `uploads/pending/${locals.user.id}/thumb-${Date.now()}.jpg`;
         await s3Client.send(
           new PutObjectCommand({
             Bucket: bucketName,

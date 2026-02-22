@@ -12,8 +12,21 @@
             {#snippet children(post)}
                 <div class="post-card">
                     <div class="media-container">
-                        {#if post.mediaUrl}
-                            <img src={post.mediaUrl} alt="Post do esgoto" />
+                        {#if post.mediaType === "video"}
+                            <video
+                                src={post.mediaUrl}
+                                poster={post.thumbUrl}
+                                controls
+                                loop
+                                playsinline
+                                class="media-content"
+                            ></video>
+                        {:else if post.mediaType === "image"}
+                            <img
+                                src={post.mediaUrl}
+                                alt="Post do esgoto"
+                                class="media-content"
+                            />
                         {:else}
                             <div class="placeholder">Mídia corrompida</div>
                         {/if}
@@ -79,7 +92,7 @@
         justify-content: center;
         overflow: hidden;
 
-        img {
+        .media-content {
             width: 100%;
             height: 100%;
             object-fit: contain;

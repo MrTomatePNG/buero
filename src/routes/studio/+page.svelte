@@ -59,6 +59,7 @@
                 <div class="icon"><Mail /></div>
                 <h2>Verifique seu E-mail</h2>
                 <p>
+                    
                     O esgoto exige autenticidade. Verifique seu e-mail para
                     habilitar o upload de posts.
                 </p>
@@ -71,7 +72,10 @@
                 method="POST"
                 action="?/upload"
                 enctype="multipart/form-data"
-                use:enhance={() => {
+                use:enhance={({ formData }) => {
+                    if (thumbnailFile) {
+                        formData.append("thumbnail", thumbnailFile);
+                    }
                     isLoading = true;
                     return async ({ result, update }) => {
                         isLoading = false;

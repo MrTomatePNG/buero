@@ -68,18 +68,21 @@ export const actions: Actions = {
         where: { id: BigInt(postId) },
       });
 
-      if (!post) return { sucess: false };
+      if (!post) return { success: false };
 
       let newStatus: any = "pending";
       let newMediaUrl = post.mediaUrl;
       let newThumbUrl = post.thumbUrl;
 
-      if (action === "approve") {
-        newStatus = "complete";
+      const mediaKey = new URL(post.mediaUrl).pathname.slice(1);
+      const thumbKey = post.thumbUrl
+        ? new URL(post.thumbUrl).pathname.slice(1)
+        : null;
 
-        const oldKey = new URL(post.mediaUrl).pathname.slice(1);
-        const newKey = oldKey.replace("uploads/pending/", "uploads/public/");
+      const moveS3 = async (oldKey: string, targetFolder: string) => {
+        if (!oldKey.includes("uploads/pending/")) return oldKey;
 
+        const newKey = oldKey.replace("uploads/pending/", `uploads/${targetFolder}/`);
         await s3Client.send(
           new CopyObjectCommand({
             Bucket: bucketName,
@@ -93,33 +96,49 @@ export const actions: Actions = {
             Key: oldKey,
           }),
         );
+        return newKey;
+      };
 
-        newMediaUrl = `https://media.sewercomedy.fun/${newKey}`;
+      const deleteS3 = async (key: string) => {
+        await s3Client.send(
+          new DeleteObjectCommand({
+            Bucket: bucketName,
+            Key: key,
+          }),
+        );
+      };
 
-        if (post.mediaType == "video" && post.thumbUrl) {
-          const oldThumb = new URL(post.thumbUrl).pathname.slice(1);
-          const newThumb = oldThumb.replace(
-            "uploads/pending/",
-            "uploads/public/",
-          );
-          await s3Client.send(
-            new CopyObjectCommand({
-              Bucket: bucketName,
-              CopySource: `${bucketName}/${oldThumb}`,
-              Key: newThumb,
-            }),
-          );
-          await s3Client.send(
-            new DeleteObjectCommand({
-              Bucket: bucketName,
-              Key: oldThumb,
-            }),
-          );
-          newThumbUrl = `https://media.sewercomedy.fun/${newThumb}`;
+      if (action === "approve") {
+        newStatus = "completed";
+        const movedMediaKey = await moveS3(mediaKey, "public");
+        newMediaUrl = `https://media.sewercomedy.fun/${movedMediaKey}`;
+
+        if (thumbKey) {
+          if (thumbKey === mediaKey) {
+            newThumbUrl = newMediaUrl;
+          } else {
+            const movedThumbKey = await moveS3(thumbKey, "public");
+            newThumbUrl = `https://media.sewercomedy.fun/${movedThumbKey}`;
+          }
+        }
+      } else if (action === "reject") {
+        newStatus = "rejected";
+        const movedMediaKey = await moveS3(mediaKey, "rejected");
+        newMediaUrl = `https://media.sewercomedy.fun/${movedMediaKey}`;
+
+        if (thumbKey && thumbKey !== mediaKey) {
+          const movedThumbKey = await moveS3(thumbKey, "rejected");
+          newThumbUrl = `https://media.sewercomedy.fun/${movedThumbKey}`;
+        } else if (thumbKey === mediaKey) {
+          newThumbUrl = newMediaUrl;
+        }
+      } else if (action === "ban") {
+        newStatus = "banned";
+        await deleteS3(mediaKey);
+        if (thumbKey && thumbKey !== mediaKey) {
+          await deleteS3(thumbKey);
         }
       }
-      if (action === "reject") newStatus = "rejected";
-      if (action === "ban") newStatus = "banned";
 
       const updated = await prisma.post.update({
         where: { id: BigInt(postId) },
