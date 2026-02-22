@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Mantém as dependências do Node.js/Bun atualizadas
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    # Agrupa atualizações para evitar excesso de PRs
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+
+  # Mantém as GitHub Actions atualizadas (como o appleboy/ssh-action)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
