@@ -69,6 +69,7 @@ jobs:
             PORT=3000
             BODY_SIZE_LIMIT=10M
             NODE_ENV=production
+            ORIGIN=https://sewercomedy.fun
             DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
             BETTER_AUTH_SECRET=${{ secrets.PROD_BETTER_AUTH_SECRET }}
             BETTER_AUTH_BASE_URL=${{ secrets.PROD_BETTER_AUTH_BASE_URL }}
