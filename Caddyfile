@@ -4,7 +4,6 @@
 	cache {
 		ttl 6h
 		allowed_http_verbs GET HEAD
-		status_codes 200 206
 		simplefs {
 			configuration {
 				path /var/cache/caddy/media
