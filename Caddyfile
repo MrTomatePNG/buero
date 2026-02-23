@@ -14,11 +14,20 @@
 }
 
 media.sewercomedy.fun {
+	# CORS Headers - Crucial para Range Requests e Cross-Origin
+	header {
+		Access-Control-Allow-Origin "https://sewercomedy.fun"
+		Access-Control-Allow-Methods "GET, OPTIONS"
+		Access-Control-Allow-Headers "Range, Content-Type, X-Requested-With"
+		Access-Control-Expose-Headers "Content-Range, Content-Length, Accept-Ranges"
+		Access-Control-Allow-Credentials "true"
+	}
+
+	@options method OPTIONS
+	respond @options 204
+
 	@pending path /uploads/pending/*
 	respond @pending 403
-
-	# Desativa compressão para vídeos (evita quebrar Range Requests)
-	encode identity
 
 	cache
 
@@ -28,14 +37,10 @@ media.sewercomedy.fun {
 			tls_insecure_skip_verify
 		}
 		header_up Host sewer-comedy-s3.br-se1.magaluobjects.com
-		# Força o S3 a não mandar GZIP
 		header_up Accept-Encoding identity
-		
 		header_down -Set-Cookie
 		header_down -Cache-Control
 		header_down +Cache-Control "public, max-age=31536000, immutable"
-		# Garante que o navegador saiba que aceitamos Range
-		header_down +Accept-Ranges bytes
 	}
 }
 
