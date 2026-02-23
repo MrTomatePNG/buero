@@ -79,7 +79,7 @@ export const actions: Actions = {
         ? new URL(post.thumbUrl).pathname.slice(1)
         : null;
 
-      const moveS3 = async (oldKey: string, targetFolder: string) => {
+      const moveS3 = async (oldKey: string, targetFolder: string, mediaType: string) => {
         if (!oldKey.includes("uploads/pending/")) return oldKey;
 
         const newKey = oldKey.replace("uploads/pending/", `uploads/${targetFolder}/`);
@@ -94,6 +94,7 @@ export const actions: Actions = {
             // Injetar cache agressivo se for para a pasta pública
             CacheControl: isPublic ? "public, max-age=31536000, immutable" : "no-cache, no-store, must-revalidate",
             ContentDisposition: "inline",
+            ContentType: mediaType,
             MetadataDirective: "REPLACE", // Necessário para aplicar o novo CacheControl
           }),
         );
@@ -117,24 +118,24 @@ export const actions: Actions = {
 
       if (action === "approve") {
         newStatus = "completed";
-        const movedMediaKey = await moveS3(mediaKey, "public");
+        const movedMediaKey = await moveS3(mediaKey, "public", post.mediaType);
         newMediaUrl = `https://media.sewercomedy.fun/${movedMediaKey}`;
 
         if (thumbKey) {
           if (thumbKey === mediaKey) {
             newThumbUrl = newMediaUrl;
           } else {
-            const movedThumbKey = await moveS3(thumbKey, "public");
+            const movedThumbKey = await moveS3(thumbKey, "public", "image/jpeg");
             newThumbUrl = `https://media.sewercomedy.fun/${movedThumbKey}`;
           }
         }
       } else if (action === "reject") {
         newStatus = "rejected";
-        const movedMediaKey = await moveS3(mediaKey, "rejected");
+        const movedMediaKey = await moveS3(mediaKey, "rejected", post.mediaType);
         newMediaUrl = `https://media.sewercomedy.fun/${movedMediaKey}`;
 
         if (thumbKey && thumbKey !== mediaKey) {
-          const movedThumbKey = await moveS3(thumbKey, "rejected");
+          const movedThumbKey = await moveS3(thumbKey, "rejected", "image/jpeg");
           newThumbUrl = `https://media.sewercomedy.fun/${movedThumbKey}`;
         } else if (thumbKey === mediaKey) {
           newThumbUrl = newMediaUrl;
