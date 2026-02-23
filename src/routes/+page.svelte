@@ -19,6 +19,7 @@
                                 controls
                                 loop
                                 playsinline
+                                crossorigin="anonymous"
                                 class="media-content"
                             ></video>
                         {:else if post.mediaType === "image"}
