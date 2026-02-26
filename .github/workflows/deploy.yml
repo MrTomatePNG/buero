@@ -30,6 +30,7 @@ jobs:
           bun prisma generate
           bun run build
         env:
+          REDIS_URL: ${{ secrets.PROD_REDIS_URL }}
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.PROD_BETTER_AUTH_SECRET }}
           BETTER_AUTH_BASE_URL: ${{ secrets.PROD_BETTER_AUTH_BASE_URL }}
