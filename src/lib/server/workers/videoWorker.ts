@@ -64,7 +64,12 @@ export const processVideo = async (job: Job) => {
     const baseKey = fileKey.replace("uploads/pending/", "uploads/pending/hls-");
     const thumbKey = fileKey.replace(/\.[^.]+$/, "-thumb.jpg");
 
-    // 4. Upload dos segmentos (automático com CacheControl padronizado em s3.ts)
+    // Verifica existência antes de atualizar
+    const id = BigInt(postId);
+    const postExists = await prisma.post.findUnique({ where: { id } });
+    if (!postExists) throw new Error(`Post ${postId} sumiu do banco.`);
+
+    // 4. Upload dos segmentos
     await uploadDirToS3(hlsDir, baseKey);
     await uploadFileToS3(thumbPath, thumbKey, "image/jpeg");
     await job.updateProgress(95);

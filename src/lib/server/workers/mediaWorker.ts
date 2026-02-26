@@ -35,6 +35,14 @@ export const processImage = async (job: Job) => {
   const processedKey = fileKey.replace(/\.[^.]+$/, ".webp");
   const thumbKey = fileKey.replace(/\.[^.]+$/, "-thumb.webp");
 
+  // Verifica se o post ainda existe antes de atualizar
+  const id = BigInt(postId);
+  const postExists = await prisma.post.findUnique({ where: { id } });
+
+  if (!postExists) {
+    throw new Error(`Post com ID ${postId} não encontrado no banco de dados. Abortando job.`);
+  }
+
   // Upload usando o helper padronizado (com cache imutável)
   await Promise.all([
     uploadObject({
