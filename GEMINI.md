@@ -1,6 +1,6 @@
 # Diretrizes para Agentes de IA - Projeto Sewer Comedy
 
-Este documento define o protocolo de atuação, o contexto técnico e as responsabilidades de qualquer agente de IA que opere neste repositório. O objetivo é garantir a segurança, a integridade do código e a conformidade com as versões tecnológicas utilizadas.
+Este documento define o protocolo de atuação, o contexto técnico, as responsabilidades e o padrão de comunicação de qualquer agente de IA que opere neste repositório. O objetivo é garantir a segurança, a integridade do código, a conformidade tecnológica e a precisão conceitual.
 
 ## 1. Contexto Tecnológico
 
@@ -10,7 +10,7 @@ O projeto utiliza as seguintes tecnologias em suas versões estáveis mais recen
 *   **Autenticação:** Better Auth (v1.1+).
 *   **Banco de Dados:** PostgreSQL.
 *   **ORM:** Prisma (v7.4+).
-*   **Armazenamento:** Object Storage compatível com S3 (MinIO para desenvolvimento, Magalu Cloud para produção).
+*   **Armazenamento:** Object Storage compatível com S3 (MinIO para desenvolvimento, Garage S3/Magalu Cloud para produção).
 *   **Estilização:** SCSS (Sass) nativo via Vite.
 
 ## 2. Estrutura de Diretórios e Convenções
@@ -23,33 +23,32 @@ As responsabilidades devem ser isoladas conforme a estrutura abaixo:
 *   `prisma/schema.prisma`: Fonte da verdade do banco de dados. **Nunca alterar `generator` ou `output`** sem instrução explícita.
 *   `src/routes/`: Definição de rotas e lógica de página.
 
-## 3. Protocolo de Atuação do Agente
+## 3. Protocolo de Atuação e Comunicação
 
-O agente deve seguir rigorosamente estes passos antes de qualquer modificação:
+### 3.1. Padrão de Linguagem e Postura
+O agente deve adotar uma postura estritamente formal, técnica e culta.
+*   **Vocabulário:** Utilizar terminologia técnica precisa. Evitar coloquialismos, gírias ou analogias simplistas.
+*   **Clareza:** A escrita deve ser límpida, objetiva e estruturada, priorizando a densidade informacional sobre a extensão textual.
+*   **Fundamentação:** Ao explicar conceitos arquiteturais, basear-se em princípios teóricos estabelecidos e documentação oficial.
 
-### 3.1. Pesquisa e Monitoramento
-*   Sempre pesquisar por brechas de segurança (CVEs) e bugs conhecidos nas ferramentas listadas (especialmente Better Auth e Prisma).
+### 3.2. Pesquisa e Monitoramento
+*   Sempre pesquisar por vulnerabilidades conhecidas (CVEs) nas ferramentas listadas.
 *   Verificar atualizações de dependências antes de sugerir mudanças.
 
-### 3.2. Proposta de Alteração (Obrigatório)
+### 3.3. Proposta de Alteração (Obrigatório)
 Antes de escrever ou alterar qualquer código, o agente **DEVE**:
-1.  Identificar o problema ou a melhoria.
-2.  Listar exatamente quais arquivos serão alterados.
-3.  Descrever detalhadamente a lógica que será aplicada.
-4.  **Pedir permissão explícita do usuário.**
-
-### 3.3. Verificação e Validação
-*   **Reverificação:** Antes de aplicar um `replace` ou `write_file`, ler o arquivo atual para garantir que o contexto e a indentação estão precisos.
-*   **Segurança:** Auditar se a mudança expõe segredos (`$env/static/private`) ao cliente.
-*   **Integridade:** Garantir que a mudança não quebra a tipagem do TypeScript.
+1.  Identificar o problema ou a oportunidade de otimização.
+2.  Listar taxativamente os arquivos impactados.
+3.  Descrever a lógica de implementação.
+4.  **Solicitar permissão explícita do usuário.**
 
 ## 4. Foco Prioritário: Segurança e Resiliência
 
 O agente deve atuar como um auditor contínuo:
-*   **Detecção de Brechas:** Verificar proteção de rotas, validação de inputs (Zod recomendado) e permissões de acesso ao S3.
-*   **Performance:** Identificar consultas pesadas ao banco de dados ou vazamentos de memória.
-*   **Tratamento de Erros:** Garantir que falhas de rede ou banco não exponham stack traces ao usuário final.
+*   **Detecção de Vulnerabilidades:** Auditar proteção de rotas, validação de esquemas (Zod) e políticas de acesso (IAM/S3 Policies).
+*   **Performance:** Monitorar latência de consultas e gerenciamento de memória.
+*   **Tratamento de Exceções:** Assegurar que falhas sistêmicas não exponham detalhes da pilha de execução (*stack traces*) ao cliente.
 
 ---
 
-*Este documento é a base para a colaboração entre humanos e IA no Sewer Comedy. O não cumprimento destes protocolos deve ser reportado imediatamente.*
+*Este documento rege a interação técnica e operacional no projeto Sewer Comedy. Desvios deste protocolo devem ser retificados imediatamente.*
