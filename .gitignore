@@ -26,5 +26,3 @@ vite.config.ts.timestamp-*
 src/lib/prisma
 src/genereted
 src/lib/genereted
-aws/cors.json
-aws/policy.json
