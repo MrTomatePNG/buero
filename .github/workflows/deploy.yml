@@ -5,103 +5,81 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
         with:
-          bun-version: latest
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache Bun Dependencies
-        uses: actions/cache@v3
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          context: .
+          file: Containerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}:latest
 
-      - name: Install Dependencies
-        run: bun install
-
-      - name: Prisma & Build
-        run: |
-          bun prisma generate
-          bun run build
-        env:
-          REDIS_PASSWD: ${{ secrets.PROD_REDIS_PASSWD }}
-          REDIS_URL: ${{ secrets.PROD_REDIS_URL }}
-          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.PROD_BETTER_AUTH_SECRET }}
-          BETTER_AUTH_BASE_URL: ${{ secrets.PROD_BETTER_AUTH_BASE_URL }}
-          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
-          S3_REGION: ${{ vars.S3_REGION }}
-          S3_ACCESS_KEY: ${{ secrets.PROD_S3_ACCESS_KEY }}
-          S3_SECRET_KEY: ${{ secrets.PROD_S3_SECRET_KEY }}
-          S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-          S3_CDN_URL: ${{ vars.S3_CDN_URL }}
-          RESEND_API_KEY: ${{ secrets.PROD_RESEND_API_KEY }}
-          NODE_OPTIONS: "--max-old-space-size=6144"
-
-      - name: Transfer Files to VPS
+      - name: Transfer Caddyfile to VPS
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: "build,package.json,bun.lock,prisma,ecosystem.config.js,Caddyfile"
+          source: "Caddyfile"
           target: "/opt/sewer-comedy"
 
-      - name: Finalize Deploy on VPS
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            set -e
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            export PATH="$HOME/.bun/bin:$PATH"
-
+            # Reload Caddy
             cd /opt/sewer-comedy
-
-            # Adapt Caddyfile to JSON (opcional, mas solicitado)
             caddy adapt --config Caddyfile --pretty > caddy.json
             caddy reload --config caddy.json
 
-            bun install --production
-            ./node_modules/.bin/prisma generate
+            # Ensure Docker is logged in
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Injetar ENVs diretamente no PM2 sem arquivo persistente
-            DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}" \
-            BETTER_AUTH_SECRET="${{ secrets.PROD_BETTER_AUTH_SECRET }}" \
-            BETTER_AUTH_BASE_URL="${{ secrets.PROD_BETTER_AUTH_BASE_URL }}" \
-            S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
-            S3_REGION="${{ vars.S3_REGION }}" \
-            S3_ACCESS_KEY="${{ secrets.PROD_S3_ACCESS_KEY }}" \
-            S3_SECRET_KEY="${{ secrets.PROD_S3_SECRET_KEY }}" \
-            S3_BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}" \
-            S3_CDN_URL="${{ vars.S3_CDN_URL }}" \
-            RESEND_API_KEY="${{ secrets.PROD_RESEND_API_KEY }}" \
-            ORIGIN="https://sewercomedy.fun" \
-            NODE_ENV="production" \
-            BODY_SIZE_LIMIT="10M" \
-            pm2 restart sewer-app --update-env || \
-            DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}" \
-            BETTER_AUTH_SECRET="${{ secrets.PROD_BETTER_AUTH_SECRET }}" \
-            BETTER_AUTH_BASE_URL="${{ secrets.PROD_BETTER_AUTH_BASE_URL }}" \
-            S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
-            S3_REGION="${{ vars.S3_REGION }}" \
-            S3_ACCESS_KEY="${{ secrets.PROD_S3_ACCESS_KEY }}" \
-            S3_SECRET_KEY="${{ secrets.PROD_S3_SECRET_KEY }}" \
-            S3_BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}" \
-            S3_CDN_URL="${{ vars.S3_CDN_URL }}" \
-            RESEND_API_KEY="${{ secrets.PROD_RESEND_API_KEY }}" \
-            ORIGIN="https://sewercomedy.fun" \
-            NODE_ENV="production" \
-            BODY_SIZE_LIMIT="10M" \
-            pm2 start ecosystem.config.js
+            # Pull the latest image
+            docker pull ghcr.io/${{ github.repository }}:latest
 
-            pm2 save
+            # Stop and remove existing container
+            docker stop sewer-app || true
+            docker rm sewer-app || true
+
+            # Run new container
+            docker run -d \
+              --name sewer-app \
+              --restart unless-stopped \
+              --network host \
+              -e DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}" \
+              -e REDIS_URL="${{ secrets.PROD_REDIS_URL }}" \
+              -e REDIS_PASSWD="${{ secrets.PROD_REDIS_PASSWD }}" \
+              -e BETTER_AUTH_SECRET="${{ secrets.PROD_BETTER_AUTH_SECRET }}" \
+              -e BETTER_AUTH_BASE_URL="${{ secrets.PROD_BETTER_AUTH_BASE_URL }}" \
+              -e S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
+              -e S3_REGION="${{ vars.S3_REGION }}" \
+              -e S3_ACCESS_KEY="${{ secrets.PROD_S3_ACCESS_KEY }}" \
+              -e S3_SECRET_KEY="${{ secrets.PROD_S3_SECRET_KEY }}" \
+              -e S3_BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}" \
+              -e S3_CDN_URL="${{ vars.S3_CDN_URL }}" \
+              -e RESEND_API_KEY="${{ secrets.PROD_RESEND_API_KEY }}" \
+              -e ORIGIN="https://sewercomedy.fun" \
+              -e NODE_ENV="production" \
+              -e BODY_SIZE_LIMIT="10M" \
+              ghcr.io/${{ github.repository }}:latest
+
+            # Prune old images
+            docker image prune -f
