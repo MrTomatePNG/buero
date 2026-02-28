@@ -20,66 +20,66 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Docker Image
+      - name: Build and Push App Image
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: Containerfile
+          file: Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: ghcr.io/${{ github.repository }}/app:latest
 
-      - name: Transfer Caddyfile to VPS
+      - name: Build and Push Caddy Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: config/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/caddy:latest
+
+      - name: Transfer Docker Compose
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: "Caddyfile"
+          source: "docker-compose.yml"
           target: "/opt/sewer-comedy"
 
-      - name: Deploy to VPS
+      - name: Transfer Caddyfile
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          source: "config/Caddyfile"
+          target: "/opt/sewer-comedy"
+          strip_components: 1
+
+      - name: Deploy via Docker Compose
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            # Reload Caddy
             cd /opt/sewer-comedy
-            caddy adapt --config Caddyfile --pretty > caddy.json
-            caddy reload --config caddy.json
-
-            # Ensure Docker is logged in
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Exportar ENVs para o docker-compose
+            export GITHUB_REPOSITORY="${{ github.repository }}"
+            export PROD_DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}"
+            export PROD_REDIS_URL="${{ secrets.PROD_REDIS_URL }}"
+            export PROD_REDIS_PASSWD="${{ secrets.PROD_REDIS_PASSWD }}"
+            export PROD_BETTER_AUTH_SECRET="${{ secrets.PROD_BETTER_AUTH_SECRET }}"
+            export PROD_BETTER_AUTH_BASE_URL="${{ secrets.PROD_BETTER_AUTH_BASE_URL }}"
+            export S3_ENDPOINT="${{ vars.S3_ENDPOINT }}"
+            export S3_REGION="${{ vars.S3_REGION }}"
+            export PROD_S3_ACCESS_KEY="${{ secrets.PROD_S3_ACCESS_KEY }}"
+            export PROD_S3_SECRET_KEY="${{ secrets.PROD_S3_SECRET_KEY }}"
+            export S3_BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
+            export S3_CDN_URL="${{ vars.S3_CDN_URL }}"
+            export PROD_RESEND_API_KEY="${{ secrets.PROD_RESEND_API_KEY }}"
 
-            # Pull the latest image
-            docker pull ghcr.io/${{ github.repository }}:latest
-
-            # Stop and remove existing container
-            docker stop sewer-app || true
-            docker rm sewer-app || true
-
-            # Run new container
-            docker run -d \
-              --name sewer-app \
-              --restart unless-stopped \
-              --network host \
-              -e DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}" \
-              -e REDIS_URL="${{ secrets.PROD_REDIS_URL }}" \
-              -e REDIS_PASSWD="${{ secrets.PROD_REDIS_PASSWD }}" \
-              -e BETTER_AUTH_SECRET="${{ secrets.PROD_BETTER_AUTH_SECRET }}" \
-              -e BETTER_AUTH_BASE_URL="${{ secrets.PROD_BETTER_AUTH_BASE_URL }}" \
-              -e S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
-              -e S3_REGION="${{ vars.S3_REGION }}" \
-              -e S3_ACCESS_KEY="${{ secrets.PROD_S3_ACCESS_KEY }}" \
-              -e S3_SECRET_KEY="${{ secrets.PROD_S3_SECRET_KEY }}" \
-              -e S3_BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}" \
-              -e S3_CDN_URL="${{ vars.S3_CDN_URL }}" \
-              -e RESEND_API_KEY="${{ secrets.PROD_RESEND_API_KEY }}" \
-              -e ORIGIN="https://sewercomedy.fun" \
-              -e NODE_ENV="production" \
-              -e BODY_SIZE_LIMIT="10M" \
-              ghcr.io/${{ github.repository }}:latest
-
-            # Prune old images
+            docker compose pull
+            docker compose up -d
             docker image prune -f
