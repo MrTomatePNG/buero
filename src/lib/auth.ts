@@ -3,7 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { username } from "better-auth/plugins";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import { getRequestEvent } from "$app/server";
-import { BETTER_AUTH_BASE_URL } from "$env/static/private";
+import { env } from "$env/dynamic/private";
 import { sendVerificationEmail } from "$lib/server/email";
 import prisma from "$lib/prisma";
 
@@ -11,7 +11,7 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  baseURL: BETTER_AUTH_BASE_URL,
+  baseURL: env.BETTER_AUTH_BASE_URL,
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true, // Bloqueia login sem verificação se desejado
