@@ -60,11 +60,12 @@ jobs:
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
+          password: ${{ secrets.PASSPHRASE }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd /opt/sewer-comedy
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
+
             # Exportar ENVs para o docker-compose
             export GITHUB_REPOSITORY="${{ vars.REPO }}"
             export PROD_DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}"
