@@ -1,4 +1,4 @@
-FROM caddy:builder AS builder
+FROM caddy:builder-alpine AS builder
 
 RUN xcaddy build \
     --with github.com/caddyserver/cache-handler \
@@ -6,13 +6,16 @@ RUN xcaddy build \
 
 FROM caddy:alpine
 
-# Copiar o binário que o xcaddy gerou (ele gera no diretório atual por padrão)
 COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 
-# Garantir que os diretórios existam e pertençam ao usuário caddy
-# Na imagem caddy:alpine o usuário 'caddy' já existe, mas vamos garantir as permissões
-RUN mkdir -p /var/cache/caddy/media /var/log/caddy && \
-    chown -R caddy:caddy /var/cache/caddy /var/log/caddy
+RUN set -x ; \
+    addgroup -g 1000 -S caddy 2>/dev/null || true ; \
+    adduser -u 1000 -D -S -G caddy caddy 2>/dev/null || true ; \
+    mkdir -p /var/cache/caddy/media /var/log/caddy ; \
+    chown -R caddy:caddy /var/cache/caddy /var/log/caddy /data /config
+
+VOLUME /data
+VOLUME /config
 
 USER caddy
 
