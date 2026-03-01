@@ -7,6 +7,8 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
+RUN bun run prepare
+
 RUN bun run prisma generate
 
 RUN bun run build
