@@ -64,21 +64,36 @@ jobs:
           script: |
             cd /opt/sewer-comedy
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
             # Exportar ENVs para o docker-compose
             export GITHUB_REPOSITORY="${{ vars.REPO }}"
-            export PROD_DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}"
-            export PROD_REDIS_URL="${{ secrets.PROD_REDIS_URL }}"
-            export PROD_REDIS_PASSWD="${{ secrets.PROD_REDIS_PASSWD }}"
+            export DB_USER="${{ secrets.DB_USER }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export DB_NAME="${{ secrets.DB_NAME }}"
+            export REDIS_PASSWD="${{ secrets.PROD_REDIS_PASSWD }}"
             export PROD_BETTER_AUTH_SECRET="${{ secrets.PROD_BETTER_AUTH_SECRET }}"
             export PROD_BETTER_AUTH_BASE_URL="${{ secrets.PROD_BETTER_AUTH_BASE_URL }}"
-            export S3_ENDPOINT="${{ vars.S3_ENDPOINT }}"
-            export S3_REGION="${{ vars.S3_REGION }}"
-            export PROD_S3_ACCESS_KEY="${{ secrets.PROD_S3_ACCESS_KEY }}"
-            export PROD_S3_SECRET_KEY="${{ secrets.PROD_S3_SECRET_KEY }}"
+            export S3_ACCESS_KEY="${{ secrets.PROD_S3_ACCESS_KEY }}"
+            export S3_SECRET_KEY="${{ secrets.PROD_S3_SECRET_KEY }}"
             export S3_BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
-            export S3_CDN_URL="${{ vars.S3_CDN_URL }}"
             export PROD_RESEND_API_KEY="${{ secrets.PROD_RESEND_API_KEY }}"
 
+            # 1. Pull das imagens novas
             docker compose pull
+
+            # 2. Garantir que o DB e Redis estejam rodando antes da migration
+            docker compose up -d db redis minio
+
+            # 3. Rodar Migrations (Usando a imagem do app recém buildada)
+            echo "Rodando migrations..."
+            docker run --rm \
+              --network sewer-comedy_sewer-network \
+              -e DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}" \
+              ghcr.io/${{ vars.REPO }}/app:latest \
+              bun prisma migrate deploy
+
+            # 4. Subir o restante dos serviços
             docker compose up -d
+            
+            # Limpar imagens antigas
             docker image prune -f
