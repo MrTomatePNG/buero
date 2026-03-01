@@ -26,7 +26,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/app:latest
+          tags: ghcr.io/${{ vars.REPO }}/app:latest
 
       - name: Build and Push Caddy Image
         uses: docker/build-push-action@v4
@@ -34,7 +34,7 @@ jobs:
           context: .
           file: config/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/caddy:latest
+          tags: ghcr.io/${{ vars.REPO }}/caddy:latest
 
       - name: Transfer Docker Compose
         uses: appleboy/scp-action@master
@@ -66,7 +66,7 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             # Exportar ENVs para o docker-compose
-            export GITHUB_REPOSITORY="${{ github.repository }}"
+            export GITHUB_REPOSITORY="${{ vars.REPO }}"
             export PROD_DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}"
             export PROD_REDIS_URL="${{ secrets.PROD_REDIS_URL }}"
             export PROD_REDIS_PASSWD="${{ secrets.PROD_REDIS_PASSWD }}"
