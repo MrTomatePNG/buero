@@ -1,6 +1,9 @@
-name: Deploy to Production
+name: Deploy App
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build_and_deploy:
@@ -13,7 +16,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Login to GitHub Container Registry
+      - name: Login to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -28,16 +31,8 @@ jobs:
           push: true
           tags: ghcr.io/${{ vars.REPO }}/app:latest
 
-      - name: Build and Push Caddy Image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: config/Dockerfile
-          push: true
-          tags: ghcr.io/${{ vars.REPO }}/caddy:latest
-
       - name: Transfer Docker Compose
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
@@ -45,17 +40,7 @@ jobs:
           source: "docker-compose.yml"
           target: "/opt/sewer-comedy"
 
-      - name: Transfer Caddyfile
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USERNAME }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          source: "config/Caddyfile"
-          target: "/opt/sewer-comedy"
-          strip_components: 1
-
-      - name: Deploy via Docker Compose
+      - name: Deploy App
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_HOST }}
@@ -65,7 +50,6 @@ jobs:
             cd /opt/sewer-comedy
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Exportar ENVs para o docker-compose
             export GITHUB_REPOSITORY="${{ vars.REPO }}"
             export DB_USER="${{ secrets.DB_USER }}"
             export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
@@ -78,22 +62,15 @@ jobs:
             export S3_BUCKET_NAME="${{ vars.S3_BUCKET_NAME }}"
             export PROD_RESEND_API_KEY="${{ secrets.PROD_RESEND_API_KEY }}"
 
-            # 1. Pull das imagens novas
-            docker compose pull
-
-            # 2. Garantir que o DB e Redis estejam rodando antes da migration
+            docker compose pull app
             docker compose up -d db redis minio
 
-            # 3. Rodar Migrations (Usando a imagem do app recém buildada)
             echo "Rodando migrations..."
-            docker run --rm \
-              --network sewer-comedy_sewer-network \
-              -e DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}" \
-              ghcr.io/${{ vars.REPO }}/app:latest \
+            docker run --rm 
+              --network sewer-comedy_sewer-network 
+              --env DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}" 
+              ghcr.io/${{ vars.REPO }}/app:latest 
               bun prisma migrate deploy
 
-            # 4. Subir o restante dos serviços
-            docker compose up -d
-            
-            # Limpar imagens antigas
+            docker compose up -d app
             docker image prune -f
