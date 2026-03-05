@@ -43,14 +43,14 @@
     <div class="studio-card">
         <header>
             <h1>Studio</h1>
-            <p>Compartilhe algo com o esgoto</p>
+            <p>Compartilhe algo novo</p>
         </header>
 
         {#if success}
             <div class="success-state" in:fade>
                 <CircleCheckBig size={48} color="var(--accent)" />
                 <h2>Post enviado!</h2>
-                <p>Aguardando aprovação dos auditores.</p>
+                <p>Aguardando revisão.</p>
                 <button
                     onclick={() => {
                         success = false;
@@ -65,7 +65,7 @@
                 <h2>Verifique seu E-mail</h2>
                 <p>
                     
-                    O esgoto exige autenticidade. Verifique seu e-mail para
+                    A autenticação é necessária. Verifique seu e-mail para
                     habilitar o upload de posts.
                 </p>
                 <button class="btn-minimal" onclick={() => location.reload()}

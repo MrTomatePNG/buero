@@ -25,7 +25,7 @@
                         {:else if post.mediaType === "image"}
                             <img
                                 src={post.mediaUrl}
-                                alt="Post do esgoto"
+                                alt="Post"
                                 class="media-content"
                             />
                         {:else}
@@ -81,7 +81,7 @@
         </Feed>
     {:else}
         <div class="empty-feed">
-            <p>O esgoto está limpo... por enquanto.</p>
+            <p>Nenhum post encontrado.</p>
             <a href="/studio" class="btn">Postar algo</a>
         </div>
     {/if}

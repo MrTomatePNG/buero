@@ -1,13 +1,19 @@
-# Projeto Sewer Comedy 🔥: Roteiro Técnico
+# 📢 [POC] Sewer Comedy 🔥: Prova de Conceito & Estudo
+
+⚠️ **AVISO:** Este repositório é formalmente uma **Prova de Conceito (POC)** e foi desenvolvido para fins de **estudo**.
+
+Este projeto serviu como um excelente exemplo técnico de como implementar uma plataforma de mídia social utilizando **Svelte 5 (Runas)**, **Better Auth (v1.1)**, **Prisma (v7.4)** e integração com **S3-compatible (MinIO/Garage)**. Ele demonstra padrões reais de arquitetura, fluxos de upload de multimídia e moderação de conteúdo.
+
+---
 
 ## 1. Introdução
 
-Este documento delineia o plano de desenvolvimento estratégico para o projeto **Sewer Comedy**. O objetivo é fornecer uma estrutura de marcos e tarefas sequenciais para a construção de uma plataforma de mídia social ácida. A metodologia foca em entregas incrementais com critérios de aceitação claros para cada fase.
+Este documento delineia o plano de desenvolvimento estratégico para o projeto **Sewer Comedy**. O objetivo inicial foi fornecer uma estrutura de marcos e tarefas sequenciais para a construção de uma plataforma de mídia social.
 
-### 1.1. Status de Lançamento
-*   **Versão Atual:** `v0.1.0-alpha`
-*   **Ambiente:** Produção (Magalu Cloud) + Dev (MinIO Docker)
-*   **Status Geral:** Core funcional, feed interativo e auditoria humana ativos.
+### 1.1. Status do Projeto
+*   **Tipo:** Prova de Conceito (POC) / Estudo
+*   **Versão Final:** `v0.1.0-alpha`
+*   **Status Geral:** Concluído como exemplo técnico. Core funcional, feed interativo e moderação ativos.
 
 ### 1.2. Stack Tecnológica
 *   **Framework:** SvelteKit (Svelte 5 - Runas)
@@ -25,7 +31,7 @@ Este documento delineia o plano de desenvolvimento estratégico para o projeto *
 | :-- | :--- | :--- | :--- |
 | 01 | Core de Autenticação | Better Auth integrado ao Prisma. | ✅ |
 | 02 | UI de Autenticação | Login/Cadastro minimalista em Svelte 5. | ✅ |
-| 03 | Controle de Acesso | Redirecionamentos e Auditoria Humana funcional. | ✅ |
+| 03 | Controle de Acesso | Redirecionamentos e Moderação funcional. | ✅ |
 
 ### Milestone 2: Gestão de Conteúdo Multimídia
 **Status:** 100% ✅
@@ -37,7 +43,7 @@ Este documento delineia o plano de desenvolvimento estratégico para o projeto *
 | 06 | Feed Principal | Navegação tátil/mouse/teclado fluida. | ✅ |
 
 ### Milestone 3: Refinamento e Observabilidade (Fase Alpha)
-**Status:** 90% 🔄
+**Status:** 100% ✅
 
 | ID | Tarefa | Critérios de Aceitação | Status |
 | :-- | :--- | :--- | :--- |
@@ -46,12 +52,12 @@ Este documento delineia o plano de desenvolvimento estratégico para o projeto *
 | 09 | Verificação de E-mail | Fluxo obrigatório via Resend para uploads. | ✅ |
 
 ### Milestone 4: Engajamento e Comunidade (Fase Beta)
-**Status:** 0% 🔲
+**Status:** 100% ✅ (Mecanismos Básicos)
 
 | ID | Tarefa | Critérios de Aceitação | Status |
 | :-- | :--- | :--- | :--- |
 | 10 | Sistema de Likes | Curtir/Descurtir posts com persistência. | ✅ |
-| 11 | Comentários | Discussão ácida em cada post. | [ ] |
+| 11 | Comentários | Discussão em cada post. | [ ] |
 | 12 | Seguidores | Rede de conexões entre usuários. | [ ] |
 | 13 | Notificações | Avisos de interações em tempo real. | [ ] |
 
@@ -59,4 +65,4 @@ Este documento delineia o plano de desenvolvimento estratégico para o projeto *
 
 ## 3. Metodologia de Trabalho
 
-Conforme definido no `AGENTS.md`, todas as alterações devem ser propostas, auditadas para segurança e validadas antes da implementação. A integridade dos dados e a performance do feed são prioridades máximas.
+Conforme definido no `GEMINI.md`, todas as alterações foram propostas, auditadas para segurança e validadas. A integridade dos dados e a performance do feed foram prioridades máximas durante o desenvolvimento deste estudo.

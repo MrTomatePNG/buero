@@ -58,7 +58,7 @@ let { data } = $props();
         </div>
         
         <footer class="profile-footer">
-            <span class="version-tag">Sewer Comedy v0.1.0-alpha</span>
+            <span class="version-tag">POC App v0.1.0-alpha</span>
         </footer>
     {:else}
         <div class="login-prompt">

@@ -20,14 +20,14 @@
             <button onclick={() => goto("/profile")} class="back-btn">
                 <ArrowLeft size={20} />
             </button>
-            <h1>Câmara de Auditoria</h1>
+            <h1>Moderação de Conteúdo</h1>
         </div>
         <p>Posts pendentes na fila: {data.queue.length}</p>
     </header>
 
     {#if data.queue.length === 0}
         <div class="empty-state">
-            <p>O esgoto está limpo. Nenhum post pendente.</p>
+            <p>Tudo em ordem. Nenhum post pendente.</p>
             <button onclick={() => goto("/profile")} class="btn-minimal"
                 >Voltar ao Perfil</button
             >
@@ -119,7 +119,7 @@
                                 name="action"
                                 value="ban"
                                 class="btn ban"
-                                title="Banir Post e Marcar como Ilicito"
+                                title="Remover e Banir"
                             >
                                 <ShieldAlert size={20} />
                             </button>
