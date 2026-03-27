@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - sewer-network
+      - buero-network
 
   redis:
     image: redis:7-alpine
@@ -23,7 +23,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - sewer-network
+      - buero-network
 
   minio:
     image: minio/minio
@@ -35,7 +35,19 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     networks:
-      - sewer-network
+      - buero-network
+
+  varnish:
+    image: varnish:7.4-alpine
+    restart: unless-stopped
+    volumes:
+      - ./config/varnish/default.vcl:/etc/varnish/default.vcl
+    tmpfs:
+      - /var/lib/varnish:exec
+    depends_on:
+      - minio
+    networks:
+      - buero-network
 
   app:
     image: ghcr.io/${GITHUB_REPOSITORY}/app:latest
@@ -58,13 +70,13 @@ services:
       - S3_ACCESS_KEY=${S3_ACCESS_KEY}
       - S3_SECRET_KEY=${S3_SECRET_KEY}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-      - S3_CDN_URL=https://media.sewercomedy.fun
+      - S3_CDN_URL=https://media.buero.fun
       - RESEND_API_KEY=${PROD_RESEND_API_KEY}
-      - ORIGIN=https://sewercomedy.fun
+      - ORIGIN=https://buero.fun
       - NODE_ENV=production
       - BODY_SIZE_LIMIT=10M
     networks:
-      - sewer-network
+      - buero-network
 
   caddy:
     image: ghcr.io/${GITHUB_REPOSITORY}/caddy:latest
@@ -82,10 +94,10 @@ services:
       - app
       - minio
     networks:
-      - sewer-network
+      - buero-network
 
 networks:
-  sewer-network:
+  buero-network:
     driver: bridge
 
 volumes:

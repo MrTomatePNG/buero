@@ -8,7 +8,7 @@ Este projeto serviu como um excelente exemplo técnico de como implementar uma p
 
 ## 1. Introdução
 
-Este documento delineia o plano de desenvolvimento estratégico para o projeto **Sewer Comedy**. O objetivo inicial foi fornecer uma estrutura de marcos e tarefas sequenciais para a construção de uma plataforma de mídia social.
+Este documento delineia o plano de desenvolvimento estratégico para o projeto **Buero**. O objetivo inicial foi fornecer uma estrutura de marcos e tarefas sequenciais para a construção de uma plataforma de mídia social.
 
 ### 1.1. Status do Projeto
 *   **Tipo:** Prova de Conceito (POC) / Estudo

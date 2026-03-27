@@ -15,17 +15,17 @@ import { createReadStream, createWriteStream, readdirSync, statSync } from "fs";
 import path from "path";
 
 export const bucketName = env.S3_BUCKET_NAME;
-export const cdnUrl = env.S3_CDN_URL || "https://media.sewercomedy.fun";
+export const cdnUrl = env.S3_CDN_URL || "https://media.buero.fun";
 
 /**
  * Cliente S3 configurado dinamicamente com variáveis estáticas.
  */
 export const s3Client = new S3Client({
-  endpoint: env.S3_ENDPOINT,
+  endpoint: env.S3_ENDPOINT ?? "",
   region: env.S3_REGION || "us-east-1",
   credentials: {
-    accessKeyId: env.S3_ACCESS_KEY,
-    secretAccessKey: env.S3_SECRET_KEY,
+    accessKeyId: env.S3_ACCESS_KEY ?? "",
+    secretAccessKey: env.S3_SECRET_KEY ?? "",
   },
   forcePathStyle: true,
 });

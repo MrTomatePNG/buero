@@ -5,6 +5,19 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import prisma from "$lib/prisma";
 import { fileTypeFromBuffer } from "file-type";
 import { mediaQueue } from "$lib/server/queue";
+import { z } from "zod";
+
+const uploadSchema = z.object({
+  comment: z
+    .string()
+    .max(500)
+    .nullable()
+    .transform((v) => v || ""),
+  media: z.instanceof(File, {
+    message: "Arquivo de mídia inválido ou ausente.",
+  }),
+  thumbnail: z.instanceof(File).nullable().optional(),
+});
 
 export const load: PageServerLoad = ({ locals }) => {
   if (!locals.user) redirect(302, "/login");
@@ -34,13 +47,21 @@ export const actions: Actions = {
     }
 
     const formData = await request.formData();
-    const comment = formData.get("comment")?.toString();
-    const media = formData.get("media");
-    const thumbnail = formData.get("thumbnail") as File | null;
 
-    if (!(media instanceof File)) {
-      return fail(400, { message: "Arquivo inválido." });
+    // Validação com Zod
+    const result = uploadSchema.safeParse({
+      comment: formData.get("comment"),
+      media: formData.get("media"),
+      thumbnail: formData.get("thumbnail"),
+    });
+
+    if (!result.success) {
+      return fail(400, {
+        message: result.error.issues[0].message,
+      });
     }
+
+    const { comment, media, thumbnail } = result.data;
 
     const MAX_SIZE = 10 * 1024 * 1024;
     if (media.size > MAX_SIZE)
@@ -61,7 +82,10 @@ export const actions: Actions = {
     const detect = await fileTypeFromBuffer(buffer);
 
     if (!detect || detect.mime !== media.type) {
-      return fail(400, { message: "Arquivo corrompido ou tipo inválido." });
+      return fail(400, {
+        message:
+          "Arquivo corrompido ou tipo inválido (falsificação de extensão).",
+      });
     }
 
     try {
@@ -84,7 +108,7 @@ export const actions: Actions = {
       const mediaUrl = `${cdnUrl}/${fileKey}`;
 
       let thumbUrl: string | null = null;
-      if (thumbnail instanceof File) {
+      if (thumbnail) {
         const thumbBuffer = Buffer.from(await thumbnail.arrayBuffer());
         const thumbKey = `uploads/pending/${locals.user.id}/thumb-${Date.now()}.jpg`;
         await s3Client.send(
@@ -105,7 +129,7 @@ export const actions: Actions = {
       const post = await prisma.post.create({
         data: {
           userId: locals.user.id,
-          comment: comment?.slice(0, 500) || "",
+          comment: comment,
           mediaUrl: mediaUrl,
           mediaType: media.type.startsWith("video") ? "video" : "image",
           mimeType: media.type,
@@ -138,13 +162,12 @@ export const actions: Actions = {
     } catch (err: any) {
       locals.logger.error(
         {
-          message: err.message,
-          stack: err.stack,
           userId: locals.user.id,
+          error: err.message,
         },
-        "Erro crítico no upload",
+        "Erro crítico no upload (detalhes omitidos do cliente)",
       );
-      return fail(500, { message: "Falha ao processar arquivo." });
+      return fail(500, { message: "Falha interna ao processar arquivo." });
     }
   },
 };

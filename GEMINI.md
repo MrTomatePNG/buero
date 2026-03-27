@@ -1,4 +1,4 @@
-# AI Agent Guidelines — Sewer Comedy Project
+# AI Agent Guidelines — Buero Project
 
 ## 1. Tech Stack
 

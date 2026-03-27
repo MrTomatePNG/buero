@@ -17,7 +17,7 @@
 	}
 }
 
-media.sewercomedy.fun {
+media.buero.fun {
 	log {
 		output file /var/log/caddy/media.log
 		format json
@@ -25,7 +25,7 @@ media.sewercomedy.fun {
 
 	# CORS Headers - Crucial para Range Requests e Cross-Origin
 	header {
-		Access-Control-Allow-Origin "https://sewercomedy.fun"
+		Access-Control-Allow-Origin "https://buero.fun"
 		Access-Control-Allow-Methods "GET, OPTIONS"
 		Access-Control-Allow-Headers "Range, Content-Type, X-Requested-With"
 		Access-Control-Expose-Headers "Content-Range, Content-Length, Accept-Ranges"
@@ -40,14 +40,10 @@ media.sewercomedy.fun {
 
 	cache
 
-	reverse_proxy minio:9000
+	reverse_proxy varnish:80
 }
 
-cauldrun.fun, www.cauldrun.fun {
-	redir https://sewercomedy.fun{uri} permanent
-}
-
-sewercomedy.fun {
+buero.fun, www.buero.fun {
 	log {
 		output file /var/log/caddy/access.log
 		format json

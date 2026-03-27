@@ -9,10 +9,20 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import type { AuditPost } from "@/lib/types";
+import { z } from "zod";
+
+const moderateSchema = z.object({
+  postId: z
+    .string()
+    .regex(/^\d+$/)
+    .transform((v) => BigInt(v)),
+  action: z.enum(["approve", "reject", "ban"]),
+});
 
 export const load: PageServerLoad = async ({ locals }) => {
+  // A proteção centralizada no hooks.server.ts já garante que locals.user é admin aqui.
+  // Mas mantemos como redundância (defense in depth)
   if (!locals.user || locals.user.role !== "admin") {
-    locals.logger.warn({ userId: locals.user?.id }, "Acesso não autorizado.");
     redirect(302, "/");
   }
 
@@ -47,29 +57,31 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
   moderate: async ({ request, locals }) => {
-    if (!locals.user || locals.user.role !== "admin") {
-      locals.logger.error(
-        { userId: locals.user?.id },
-        "Tentativa de moderação sem permissão.",
+    // A proteção centralizada no hooks.server.ts já trata isso.
+    if (!locals.user || locals.user.role !== "admin") throw error(403);
+
+    const formData = await request.formData();
+    const result = moderateSchema.safeParse({
+      postId: formData.get("postId"),
+      action: formData.get("action"),
+    });
+
+    if (!result.success) {
+      locals.logger.warn(
+        { errors: result.error.issues },
+        "Tentativa de moderação com dados inválidos",
       );
-      throw error(403);
+      return { success: false, message: "Dados inválidos." };
     }
 
-    const data = await request.formData();
-    const postId = data.get("postId")?.toString();
-    const action = data.get("action")?.toString(); // 'approve', 'reject', 'ban'
-
-    if (!postId || !action) {
-      locals.logger.warn({ postId, action }, "Dados de moderação incompletos.");
-      return { success: false };
-    }
+    const { postId, action } = result.data;
 
     try {
       const post = await prisma.post.findUnique({
-        where: { id: BigInt(postId) },
+        where: { id: postId },
       });
 
-      if (!post) return { success: false };
+      if (!post) return { success: false, message: "Post não encontrado." };
 
       let newStatus: any = "pending";
       let newMediaUrl = post.mediaUrl;
@@ -80,11 +92,18 @@ export const actions: Actions = {
         ? post.thumbUrl.replace(`${cdnUrl}/`, "")
         : null;
 
-      const moveS3 = async (oldKey: string, targetFolder: string, contentType: string) => {
+      const moveS3 = async (
+        oldKey: string,
+        targetFolder: string,
+        contentType: string,
+      ) => {
         if (!oldKey.includes("uploads/pending/")) return oldKey;
 
-        const newKey = oldKey.replace("uploads/pending/", `uploads/${targetFolder}/`);
-        
+        const newKey = oldKey.replace(
+          "uploads/pending/",
+          `uploads/${targetFolder}/`,
+        );
+
         const isPublic = targetFolder === "public";
 
         await s3Client.send(
@@ -92,7 +111,9 @@ export const actions: Actions = {
             Bucket: bucketName,
             CopySource: `${bucketName}/${oldKey}`,
             Key: newKey,
-            CacheControl: isPublic ? "public, max-age=31536000, immutable" : "no-cache, no-store, must-revalidate",
+            CacheControl: isPublic
+              ? "public, max-age=31536000, immutable"
+              : "no-cache, no-store, must-revalidate",
             ContentDisposition: "inline",
             ContentType: contentType,
             MetadataDirective: "REPLACE",
@@ -125,7 +146,11 @@ export const actions: Actions = {
           if (thumbKey === mediaKey) {
             newThumbUrl = newMediaUrl;
           } else {
-            const movedThumbKey = await moveS3(thumbKey, "public", "image/jpeg");
+            const movedThumbKey = await moveS3(
+              thumbKey,
+              "public",
+              "image/jpeg",
+            );
             newThumbUrl = `${cdnUrl}/${movedThumbKey}`;
           }
         }
@@ -135,7 +160,11 @@ export const actions: Actions = {
         newMediaUrl = `${cdnUrl}/${movedMediaKey}`;
 
         if (thumbKey && thumbKey !== mediaKey) {
-          const movedThumbKey = await moveS3(thumbKey, "rejected", "image/jpeg");
+          const movedThumbKey = await moveS3(
+            thumbKey,
+            "rejected",
+            "image/jpeg",
+          );
           newThumbUrl = `${cdnUrl}/${movedThumbKey}`;
         } else if (thumbKey === mediaKey) {
           newThumbUrl = newMediaUrl;
@@ -149,7 +178,7 @@ export const actions: Actions = {
       }
 
       const updated = await prisma.post.update({
-        where: { id: BigInt(postId) },
+        where: { id: postId },
         data: {
           status: newStatus,
           mediaUrl: newMediaUrl,
@@ -168,9 +197,12 @@ export const actions: Actions = {
       );
 
       return { success: true };
-    } catch (err) {
-      locals.logger.error({ err, postId }, "Erro ao processar moderação");
-      return { success: false };
+    } catch (err: any) {
+      locals.logger.error(
+        { error: err.message, postId: postId.toString() },
+        "Erro ao processar moderação",
+      );
+      return { success: false, message: "Erro interno no servidor." };
     }
   },
 };

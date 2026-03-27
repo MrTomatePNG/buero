@@ -3,7 +3,7 @@ import { svelteKitHandler } from "better-auth/svelte-kit";
 import { building } from "$app/environment";
 import { sequence } from "@sveltejs/kit/hooks";
 import { baseLogger } from "$lib/server/logger";
-import type { Handle } from "@sveltejs/kit";
+import { error, redirect, type Handle } from "@sveltejs/kit";
 
 // Inicializa os workers apenas se não estiver no processo de build
 if (!building) {
@@ -53,4 +53,28 @@ const sessionHandle: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-export const handle = sequence(logger, authHandle, sessionHandle);
+const authorizationHandle: Handle = async ({ event, resolve }) => {
+  const isAudit = event.url.pathname.startsWith("/audit");
+
+  if (isAudit) {
+    if (!event.locals.user) {
+      redirect(302, "/login");
+    }
+    if (event.locals.user.role !== "admin") {
+      event.locals.logger.warn(
+        { userId: event.locals.user.id },
+        "Tentativa de acesso proibido a /audit",
+      );
+      error(403, "Acesso negado.");
+    }
+  }
+
+  return resolve(event);
+};
+
+export const handle = sequence(
+  logger,
+  authHandle,
+  sessionHandle,
+  authorizationHandle,
+);

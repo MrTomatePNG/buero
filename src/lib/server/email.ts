@@ -7,7 +7,7 @@ const resend = new Resend(env.RESEND_API_KEY);
 export const sendVerificationEmail = async (to: string, url: string) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: "App <no-reply@sewercomedy.fun>",
+      from: "App <no-reply@buero.fun>",
       to: [to],
       subject: "Verifique seu e-mail",
       html: `
