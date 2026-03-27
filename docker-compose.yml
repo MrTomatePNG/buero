@@ -49,6 +49,15 @@ services:
     networks:
       - buero-network
 
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025" # Interface Web
+      - "1025:1025" # Servidor SMTP
+    networks:
+      - buero-network
+
   app:
     image: ghcr.io/${GITHUB_REPOSITORY}/app:latest
     restart: unless-stopped
